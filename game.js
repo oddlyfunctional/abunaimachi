@@ -42,7 +42,7 @@ window.onload = function() {
     });
 
     function preload () {
-        game.load.image('logo', 'node_modules/phaser/phaser-logo-small.png');
+        game.load.image('logo', 'images/player.png');
         game.load.image('wall', 'images/wall.png');
         game.load.image('path', 'images/path.png');
     }
@@ -68,7 +68,6 @@ window.onload = function() {
 
       var x = 0;
       var y = 0;
-      var cellSize = 55;
 
       grid.forEach(function(row) {
         row.forEach(function(cell) {
@@ -78,17 +77,17 @@ window.onload = function() {
             game.add.sprite(x, y, 'path');
           }
 
-          x += cellSize;
+          x += cellWidth;
         });
 
         x = 0
-        y += cellSize;
+        y += cellWidth;
       });
 
       logo = game.add.sprite(0, 0, 'logo');
       logo.anchor.setTo(0.5, 0.5);
       logo.angle = 0;
-      setPlayerInitialPosition(0, 14);
+      setPlayerInitialPosition(5, 5);
 
       cursors = game.input.keyboard.createCursorKeys();
 
@@ -102,11 +101,12 @@ window.onload = function() {
 
 
     function update() {
+      console.log(moves[currentMove]);
       switch (moves[currentMove]) {
         case "forward":
           console.log(logo.x, logo.y, targetPosition.x, targetPosition.y);
           if (isMovingForward()) {
-            switch(Math.floor(logo.angle)) {
+            switch(Math.round(logo.angle)) {
               case 0:
                 logo.y -= speed;
                 break;
@@ -128,8 +128,9 @@ window.onload = function() {
           }
           break;
         case "turnRight":
+          console.log(isTurning())
           if (isTurning()) {
-            logo.angle += speed;
+            logo.angle = Math.round(logo.angle + speed);
           } else {
             currentMove += 1;
             setNextMove();
@@ -137,7 +138,7 @@ window.onload = function() {
           break;
         case "turnLeft":
           if (isTurning()) {
-            logo.angle -= speed;
+            logo.angle = Math.round(logo.angle - speed);
           } else {
             currentMove += 1;
             setNextMove();
@@ -166,7 +167,7 @@ window.onload = function() {
 
     function moveForward() {
       targetPosition = { x: logo.x, y: logo.y };
-      switch(Math.floor(logo.angle)) {
+      switch(Math.round(logo.angle)) {
         case 0:
           targetPosition.y -= cellWidth;
           break;
@@ -188,7 +189,7 @@ window.onload = function() {
       var oldAngle = logo.angle;
 
       logo.angle += degrees;
-      targetAngle = Math.floor(logo.angle);
+      targetAngle = Math.round(logo.angle);
 
       logo.angle = oldAngle;
     }
@@ -199,7 +200,7 @@ window.onload = function() {
 
     function isTurning() {
       console.log(logo.angle, targetAngle);
-      return Math.floor(logo.angle) != targetAngle;
+      return Math.round(logo.angle) != targetAngle;
     }
 
     function forward() {
