@@ -19,7 +19,7 @@ window.onload = function() {
     });
 
     function preload () {
-        game.load.image('logo', 'node_modules/phaser/phaser-logo-small.png');
+        game.load.image('logo', 'images/player.png');
         game.load.image('wall', 'images/wall.png');
         game.load.image('path', 'images/path.png');
     }
