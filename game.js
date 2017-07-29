@@ -5,9 +5,10 @@ window.onload = function() {
     var cursors;
     var logo;
     var speed = 1;
-    var moves = ["forward", "forward", "forward"];
+    var moves = ["forward", "turnRight", "forward", "turnLeft", "forward"];
     var currentMove = 0;
-    var target;
+    var targetPosition = {};
+    var targetAngle;
     var cellWidth = 55;
 
     var game = new Phaser.Game(800, 600, Phaser.AUTO, '', {
@@ -24,7 +25,13 @@ window.onload = function() {
     }
 
     function create () {
-      var grid = [[0,1],[1,0],[0,1],[0,1],[0,1]];
+      var grid = [
+        [0,1],
+        [1,0],
+        [0,1],
+        [0,1],
+        [0,1],
+      ];
 
       var x = 0;
       var y = 0;
@@ -45,49 +52,103 @@ window.onload = function() {
         y += cellSize;
       });
 
-        logo = game.add.sprite(game.world.centerX, game.world.centerY, 'logo');
-        logo.anchor.setTo(0.5, 0.5);
-        logo.angle = 270;
+      logo = game.add.sprite(game.world.centerX, game.world.centerY, 'logo');
+      logo.anchor.setTo(0.5, 0.5);
+      logo.angle = 270;
 
-        cursors = game.input.keyboard.createCursorKeys();
+      cursors = game.input.keyboard.createCursorKeys();
 
-        target = { x: logo.x, y: logo.y };
+      setNextMove();
     }
 
 
     function update() {
-      if (logo.y != target.y || logo.x != target.x) {
-        switch(logo.angle) {
-          case 0:
-            logo.y -= speed;
-            break;
-          case 90:
-            logo.x += speed;
-            break;
-          case -180:
-            logo.y += speed;
-            break;
-          case -90:
-            logo.x -= speed;
-            break;
-        }
-      } else if (currentMove < moves.length) {
-        switch(logo.angle) {
-          case 0:
-            target.y -= cellWidth;
-            break;
-          case 90:
-            target.x += cellWidth;
-            break;
-          case -180:
-            target.y += cellWidth;
-            break;
-          case -90:
-            target.x -= cellWidth;
-            break;
-        }
-        currentMove += 1;
+      switch (moves[currentMove]) {
+        case "forward":
+          if (isMovingForward()) {
+            switch(logo.angle) {
+              case 0:
+                logo.y -= speed;
+                break;
+              case 90:
+                logo.x += speed;
+                break;
+              case -180:
+                logo.y += speed;
+                break;
+              case -90:
+                logo.x -= speed;
+                break;
+            }
+          } else if (currentMove < moves.length) {
+            currentMove += 1;
+            setNextMove();
+          }
+          break;
+        case "turnRight":
+          if (isTurning()) {
+            logo.angle += speed;
+          } else {
+            currentMove += 1;
+            setNextMove();
+          }
+          break;
+        case "turnLeft":
+          if (isTurning()) {
+            logo.angle -= speed;
+          } else {
+            currentMove += 1;
+            setNextMove();
+          }
+          break;
       }
+    }
+
+    function setNextMove() {
+      if (currentMove >= moves.length) { return; }
+      switch(moves[currentMove]) {
+        case "forward":
+          forward();
+          break;
+        case "turnRight":
+          turn(90);
+          break;
+        case "turnLeft":
+          turn(-90);
+          break;
+        default:
+          throw new Error("Deu merda! " + moves[currentMove]);
+      }
+    }
+
+    function forward() {
+      targetPosition = { x: logo.x, y: logo.y };
+      switch(logo.angle) {
+        case 0:
+          targetPosition.y -= cellWidth;
+          break;
+        case 90:
+          targetPosition.x += cellWidth;
+          break;
+        case -180:
+          targetPosition.y += cellWidth;
+          break;
+        case -90:
+          targetPosition.x -= cellWidth;
+          break;
+      }
+    }
+
+    function turn(degrees) {
+      targetAngle = logo.angle + degrees;
+    }
+
+    function isMovingForward() {
+      return logo.y != targetPosition.y || logo.x != targetPosition.x;
+    }
+
+    function isTurning() {
+      return logo.angle != targetAngle;
     }
 
     function render() {
