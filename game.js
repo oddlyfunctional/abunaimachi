@@ -5,7 +5,29 @@ window.onload = function() {
     var cursors;
     var logo;
     var speed = 1;
+    var testScript = "" +
+    "function run() {" +
+    "  forward();" +
+    "  turnRight();" +
+    "  turnRight();" +
+    "  turnRight();" +
+    "  turnRight();" +
+    "  forward();" +
+    "  turnLeft();" +
+    "  turnLeft();" +
+    "  turnLeft();" +
+    "  turnLeft();" +
+    "  forward();" +
+    "  turnRight();" +
+    "  turnRight();" +
+    "  forward();" +
+    "  forward();" +
+    "  forward();" +
+    "}";
     var moves = [];
+    eval(testScript);
+    run();
+    console.log(moves);
     var currentMove = 0;
     var targetPosition = {};
     var targetAngle;
@@ -20,7 +42,7 @@ window.onload = function() {
     });
 
     function preload () {
-        game.load.image('logo', 'images/player.png');
+        game.load.image('logo', 'node_modules/phaser/phaser-logo-small.png');
         game.load.image('wall', 'images/wall.png');
         game.load.image('path', 'images/path.png');
     }
@@ -82,8 +104,9 @@ window.onload = function() {
     function update() {
       switch (moves[currentMove]) {
         case "forward":
+          console.log(logo.x, logo.y, targetPosition.x, targetPosition.y);
           if (isMovingForward()) {
-            switch(logo.angle) {
+            switch(Math.floor(logo.angle)) {
               case 0:
                 logo.y -= speed;
                 break;
@@ -96,6 +119,8 @@ window.onload = function() {
               case -90:
                 logo.x -= speed;
                 break;
+              default:
+                throw new Error("Unrecognized angle: " + logo.angle);
             }
           } else if (currentMove < moves.length) {
             currentMove += 1;
@@ -122,10 +147,11 @@ window.onload = function() {
     }
 
     function setNextMove() {
+      console.log("============")
       if (currentMove >= moves.length) { return; }
       switch(moves[currentMove]) {
         case "forward":
-          forward();
+          moveForward();
           break;
         case "turnRight":
           turn(90);
@@ -138,9 +164,9 @@ window.onload = function() {
       }
     }
 
-    function forward() {
+    function moveForward() {
       targetPosition = { x: logo.x, y: logo.y };
-      switch(logo.angle) {
+      switch(Math.floor(logo.angle)) {
         case 0:
           targetPosition.y -= cellWidth;
           break;
@@ -153,11 +179,18 @@ window.onload = function() {
         case -90:
           targetPosition.x -= cellWidth;
           break;
+        default:
+          throw new Error("Unrecognized angle: " + logo.angle);
       }
     }
 
     function turn(degrees) {
-      targetAngle = logo.angle + degrees;
+      var oldAngle = logo.angle;
+
+      logo.angle += degrees;
+      targetAngle = Math.floor(logo.angle);
+
+      logo.angle = oldAngle;
     }
 
     function isMovingForward() {
@@ -165,7 +198,20 @@ window.onload = function() {
     }
 
     function isTurning() {
-      return logo.angle != targetAngle;
+      console.log(logo.angle, targetAngle);
+      return Math.floor(logo.angle) != targetAngle;
+    }
+
+    function forward() {
+      moves.push("forward");
+    }
+
+    function turnLeft() {
+      moves.push("turnLeft");
+    }
+
+    function turnRight() {
+      moves.push("turnRight");
     }
 
     function render() {
