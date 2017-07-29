@@ -19,9 +19,31 @@ window.onload = function() {
 
     function preload () {
         game.load.image('logo', 'node_modules/phaser/phaser-logo-small.png');
+        game.load.image('wall', 'images/wall.png');
+        game.load.image('path', 'images/path.png');
     }
 
     function create () {
+      var grid = [[0,1],[1,0],[0,1],[0,1],[0,1]];
+
+      var x = 0;
+      var y = 0;
+      var cellSize = 55;
+
+      grid.forEach(function(row) {
+        row.forEach(function(cell) {
+          if (cell == 0) {
+            game.add.sprite(x, y, 'wall');
+          } else {
+            game.add.sprite(x, y, 'path');
+          }
+
+          x += cellSize;
+        });
+
+        x = 0
+        y += cellSize;
+      });
 
         logo = game.add.sprite(game.world.centerX, game.world.centerY, 'logo');
         logo.anchor.setTo(0.5, 0.5);
@@ -31,6 +53,7 @@ window.onload = function() {
 
         target = { x: logo.x, y: logo.y };
     }
+
 
     function update() {
       if (logo.y != target.y || logo.x != target.x) {
