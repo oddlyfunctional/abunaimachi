@@ -5,13 +5,14 @@ window.onload = function() {
     var cursors;
     var logo;
     var speed = 1;
-    var moves = ["forward", "turnRight", "forward", "turnLeft", "forward"];
+    var moves = [];
     var currentMove = 0;
     var targetPosition = {};
     var targetAngle;
     var cellWidth = 55;
 
-    var game = new Phaser.Game(800, 600, Phaser.AUTO, '', {
+
+    var game = new Phaser.Game(1100, 825, Phaser.AUTO, '', {
         preload: preload,
         create: create,
         update: update,
@@ -26,11 +27,21 @@ window.onload = function() {
 
     function create () {
       var grid = [
-        [0,1,0,1,0,1,0,1],
-        [1,0,1,0,1,0,1,0],
-        [0,1,0,1,0,1,0,1],
-        [1,0,1,0,1,0,1,0],
-        [0,1,0,1,0,1,0,1],
+        [0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1],
+        [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0],
+        [0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1],
+        [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0],
+        [0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1],
+        [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0],
+        [0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1],
+        [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0],
+        [0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1],
+        [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0],
+        [0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1],
+        [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0],
+        [0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1],
+        [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0],
+        [0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1]
       ];
 
       var x = 0;
@@ -52,13 +63,19 @@ window.onload = function() {
         y += cellSize;
       });
 
-      logo = game.add.sprite(game.world.centerX, game.world.centerY, 'logo');
+      logo = game.add.sprite(0, 0, 'logo');
       logo.anchor.setTo(0.5, 0.5);
-      logo.angle = 270;
+      logo.angle = 0;
+      setPlayerInitialPosition(0, 14);
 
       cursors = game.input.keyboard.createCursorKeys();
 
       setNextMove();
+    }
+
+    function setPlayerInitialPosition(x, y){
+      logo.x = (55 * x) + 27
+      logo.y = (55 * y) + 27
     }
 
 
