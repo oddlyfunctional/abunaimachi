@@ -21,6 +21,7 @@ window.onload = function() {
 
       var x = 0;
       var y = 0;
+      var cellSize = 55;
 
       grid.forEach(function(row) {
         row.forEach(function(cell) {
@@ -30,11 +31,11 @@ window.onload = function() {
             game.add.sprite(x, y, 'path');
           }
 
-          x += 50;
+          x += cellSize;
         });
 
         x = 0
-        y += 50;
+        y += cellSize;
       });
     }
 
