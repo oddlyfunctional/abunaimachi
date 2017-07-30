@@ -17,10 +17,11 @@ window.onload = function() {
     eval(testScript);
     run();
     console.log(moves);
-    var currentMove = 0;
+    var currentMove = -1;
     var targetPosition = {};
     var targetAngle;
     var cellWidth = 55;
+    var energy = 5;
 
 
     var game = new Phaser.Game(1100, 825, Phaser.AUTO, '', {
@@ -123,7 +124,6 @@ window.onload = function() {
                 throw new Error("Unrecognized angle: " + logo.angle);
             }
           } else if (currentMove < moves.length) {
-            currentMove += 1;
             setNextMove();
           }
           break;
@@ -132,7 +132,6 @@ window.onload = function() {
           if (isTurning()) {
             logo.angle = Math.round(logo.angle + speed);
           } else {
-            currentMove += 1;
             setNextMove();
           }
           break;
@@ -140,7 +139,6 @@ window.onload = function() {
           if (isTurning()) {
             logo.angle = Math.round(logo.angle - speed);
           } else {
-            currentMove += 1;
             setNextMove();
           }
           break;
@@ -149,19 +147,27 @@ window.onload = function() {
 
     function setNextMove() {
       if (currentMove >= moves.length) { return; }
-      switch(moves[currentMove]) {
-        case "forward":
-          moveForward();
-          break;
-        case "turnRight":
-          turn(90);
-          break;
-        case "turnLeft":
-          turn(-90);
-          break;
-        default:
-          throw new Error("Deu merda! " + moves[currentMove]);
+      if (hasEnergy()) {
+        currentMove += 1;
+        energy = energy - 1;
+        switch(moves[currentMove]) {
+          case "forward":
+            moveForward();
+            break;
+          case "turnRight":
+            turn(90);
+            break;
+          case "turnLeft":
+            turn(-90);
+            break;
+          default:
+            throw new Error("Deu merda! " + moves[currentMove]);
+        }
       }
+    }
+
+    function hasEnergy() {
+      return energy >= 1;
     }
 
     function moveForward() {
