@@ -3,13 +3,15 @@ window.onload = function() {
   //  Although it will work fine with this tutorial, it's almost certainly not the most current version.
   //  Be sure to replace it with an updated version before you start experimenting with adding your own code.
 
-  var grid = [
+  var initialGrid = [
     [1,0,1,1,1,1],
     [1,2,4,3,1,1],
     [0,1,1,4,1,1],
     [0,2,1,3,1,1],
     [0,1,1,1,1,1],
   ];
+
+  var grid;
 
   var CELL_WIDTH = 55;
   var WALL = 0;
@@ -25,8 +27,8 @@ window.onload = function() {
 
   var GRID_LEFT = 0;
   var GRID_TOP = 0;
-  var GRID_WIDTH = grid[0].length * CELL_WIDTH;
-  var GRID_HEIGHT = grid.length * CELL_WIDTH;
+  var GRID_WIDTH = initialGrid[0].length * CELL_WIDTH;
+  var GRID_HEIGHT = initialGrid.length * CELL_WIDTH;
   var GRID_BOTTOM = GRID_TOP + GRID_HEIGHT;
   var GRID_RIGHT = GRID_LEFT + GRID_WIDTH;
 
@@ -73,16 +75,19 @@ window.onload = function() {
     "}";
 
   var moves = [];
-  eval(testScript);
-  run();
   var currentMove = -1;
   var targetPosition = {};
   var targetAngle;
-  var energy = 7;
+  var isPlaying = false;
+  var initialRobotPosition = { row: 0, column: 0 };
   var stones = [];
   var boxes = [];
   var batteries = [];
+  var paths = [];
+  var walls = [];
 
+  var initialEnergy = 7;
+  var energy = initialEnergy;
   var energyLabel;
 
   var game = new Phaser.Game(1920, 1080, Phaser.AUTO, '', {
@@ -103,6 +108,7 @@ window.onload = function() {
     game.load.image('battery', 'images/battery.png');
     game.load.image('editor', 'images/editor.png');
     game.load.image('cursor', 'images/cursor.png');
+    game.load.image('play-button', 'images/play-button.png');
 
     game.load.audio('drop_stone', 'sounds/drop_stone.wav');
     game.load.audio('pick_stone', 'sounds/pick_stone.wav');
@@ -111,61 +117,89 @@ window.onload = function() {
     game.load.audio('rotate', 'sounds/rotate.wav');
   }
 
-  function create () {
+  function destroy(sprite) {
+    sprite.destroy();
+  }
+
+  function reset() {
+    grid = JSON.parse(JSON.stringify(initialGrid));
+
+    while (robot.children.length > 0) {
+      robot.removeChildAt(0);
+    }
+
+    batteries.forEach(destroy);
+    stones.forEach(destroy);
+    boxes.forEach(destroy);
+    paths.forEach(destroy);
+    walls.forEach(destroy);
+
+    batteries = [];
+    stones = [];
+    boxes = [];
+    paths = [];
+    walls = [];
     grid.forEach(function(cells, row) {
       cells.forEach(function(cell, column) {
         switch(cell) {
           case WALL:
             var wall = game.add.sprite(0, 0, 'wall');
-          wall.anchor.setTo(0.5, 0.5);
-          setPosition(wall, row, column);
-          break;
+            wall.anchor.setTo(0.5, 0.5);
+            setPosition(wall, row, column);
+            walls.push(wall);
+            break;
           case PATH:
-            addPath(column, row);
-          break;
+            paths.push(addPath(column, row));
+            break;
           case STONE:
             var stone = game.add.sprite(0, 0, 'stone');
-          stone.anchor.setTo(0.5, 0.5);
-          setPosition(stone, row, column);
-          stones.push(stone);
-          addPath(column, row);
-          break;
+            stone.anchor.setTo(0.5, 0.5);
+            setPosition(stone, row, column);
+            stones.push(stone);
+            paths.push(addPath(column, row));
+            break;
           case BOX:
             var box = game.add.sprite(0, 0, 'box');
-          box.anchor.setTo(0.5, 0.5);
-          setPosition(box, row, column);
-          boxes.push(box);
-          addPath(column, row);
-          break;
+            box.anchor.setTo(0.5, 0.5);
+            setPosition(box, row, column);
+            boxes.push(box);
+            paths.push(addPath(column, row));
+            break;
           case BATTERY:
             var battery = game.add.sprite(0, 0, 'battery');
-          battery.anchor.setTo(0.5, 0.5);
-          setPosition(battery, row, column);
-          batteries.push(battery);
-          addPath(column, row);
-          break;
+            battery.anchor.setTo(0.5, 0.5);
+            setPosition(battery, row, column);
+            batteries.push(battery);
+            paths.push(addPath(column, row));
+            break;
         }
       });
     });
 
     boxes.forEach(function(box) {
       box.bringToTop();
-      game.physics.enable(box, Phaser.Physics.ARCADE);
     });
 
     stones.forEach(function(stone) {
       stone.bringToTop();
-      game.physics.enable(stone, Phaser.Physics.ARCADE);
     });
 
     batteries.forEach(function(battery) {
       battery.bringToTop();
     });
 
-    robot = game.add.sprite(0, 0, 'robot');
-    robot.anchor.setTo(0.5, 0.5);
+    currentMove = -1;
     robot.angle = 0;
-    setPosition(robot, 0, 0);
+    setPosition(robot, initialRobotPosition.row, initialRobotPosition.column);
+    energy = initialEnergy;
+    setNextMove();
+    robot.bringToTop();
+  }
+
+  function create () {
+    robot = game.add.sprite(0, 0, 'robot');
+    window.robot = robot;
+    robot.anchor.setTo(0.5, 0.5);
 
     editor = game.add.sprite(300, 50, 'editor');
 
@@ -173,10 +207,6 @@ window.onload = function() {
     editorText.font = "'Courier New', Courier, monospace";
     editorText.fontSize = FONT_WIDTH;
     editor.addChild(editorText);
-
-    game.physics.startSystem(Phaser.Physics.ARCADE);
-    game.physics.enable(robot, Phaser.Physics.ARCADE);
-
 
     drop_stone = game.add.audio('drop_stone');
     drop_stone.allowMultiple = true;
@@ -203,12 +233,20 @@ window.onload = function() {
     game.input.keyboard.addKeyCapture([Phaser.Keyboard.LEFT, Phaser.Keyboard.RIGHT, Phaser.Keyboard.UP, Phaser.Keyboard.DOWN, Phaser.Keyboard.SPACEBAR]);
     game.input.keyboard.onDownCallback = write;
 
-    game.physics.startSystem(Phaser.Physics.ARCADE);
-    game.physics.enable(robot, Phaser.Physics.ARCADE);
-
     game.stage.backgroundColor = 0xcccccc;
     energyLabel = game.add.text(400, 0, energy);
-    setNextMove();
+
+    playButton = game.add.button(400, 0, 'play-button', play);
+
+    reset();
+  }
+
+  function play() {
+    moves = [];
+    eval(editorText.text);
+    run();
+    isPlaying = true;
+    reset();
   }
 
   function addPath(row, column) {
@@ -216,6 +254,7 @@ window.onload = function() {
     path.sendToBack();
     path.anchor.setTo(0.5, 0.5);
     setPosition(path, column, row);
+    return path;
   }
 
   function setPosition(sprite, row, column){
@@ -224,13 +263,7 @@ window.onload = function() {
   }
 
   function update() {
-    stones.forEach(function(stone) {
-      game.physics.arcade.collide(robot, stone, collisionStoneHandler);
-    });
-
-    boxes.forEach(function(box) {
-      game.physics.arcade.collide(robot, box, collisionBoxHandler);
-    });
+    if (!isPlaying) { return; }
 
     switch (moves[currentMove]) {
       case "forward":
@@ -257,10 +290,10 @@ window.onload = function() {
       break;
       case "turnRight":
         if (isTurning()) {
-        robot.angle = Math.round(robot.angle + speed);
-      } else {
-        setNextMove();
-      }
+          robot.angle = Math.round(robot.angle + speed);
+        } else {
+          setNextMove();
+        }
       break;
       case "turnLeft":
         if (isTurning()) {
@@ -272,9 +305,37 @@ window.onload = function() {
     }
   }
 
+  function pickStone() {
+    var stone = findSprite(stones);
+    var robotCoords = getRobotCoordinates();
+
+    robot.addChild(stone);
+    stone.x = 0;
+    stone.y = 0;
+    grid[robotCoords.y][robotCoords.x] = PATH;
+    pick_stone.play();
+  }
+
+  function dropStone() {
+    if (robot.children.length > 0) {
+      var stone = robot.removeChildAt(0);
+      stone.x = robot.x;
+      stone.y = robot.y;
+      drop_stone.play();
+    }
+  }
+
   function setNextMove() {
-    if (getCurrentCell() == BATTERY) {
-      pickBattery();
+    switch (getCurrentCell()) {
+      case BATTERY:
+        pickBattery();
+        break;
+      case STONE:
+        pickStone();
+        break;
+      case BOX:
+        dropStone();
+        break;
     }
 
     if (currentMove + 1 >= moves.length) { return; }
@@ -284,20 +345,21 @@ window.onload = function() {
     switch(moves[currentMove]) {
       case "forward":
         if (canMoveForward()) {
-        moveForward();
-      } else {
-        currentMove++;
-        setNextMove();
-      }
-      break;
+          step.play();
+          moveForward();
+        } else {
+          hit_wall.play();
+          setNextMove();
+        }
+        break;
       case "turnRight":
         rotate.play('turn');
-      turn(90);
-      break;
+        turn(90);
+        break;
       case "turnLeft":
         rotate.play('turn');
-      turn(-90);
-      break;
+        turn(-90);
+        break;
       default:
         throw new Error("Deu merda! " + moves[currentMove]);
     }
@@ -307,7 +369,6 @@ window.onload = function() {
 
   function moveForward() {
     targetPosition = { x: robot.x, y: robot.y };
-    playNextMoveSound();
 
     switch(Math.round(robot.angle)) {
       case FACE_UP:
@@ -430,40 +491,6 @@ window.onload = function() {
       x: Math.floor(relativeX / CELL_WIDTH),
       y: Math.floor(relativeY / CELL_WIDTH),
     };
-  }
-
-  function collisionStoneHandler(robot, stone) {
-
-    robot.addChild(stone);
-    stone.x = 0;
-    stone.y = 0;
-  }
-
-  function collisionBoxHandler(robot, box) {
-    var stone = robot.removeChildAt(0);
-
-    stone.x = box.x;
-    stone.y = box.y;
-    boxes.splice(boxes.indexOf(box), 1);
-    stones.splice(stones.indexOf(stone), 1);
-  }
-
-  function playNextMoveSound() {
-    console.log("WTF")
-    switch(nextCell()) {
-      case STONE:
-        console.log("STONE")
-        pick_stone.play();
-      break;
-      case BOX:
-        console.log("BOX")
-        drop_stone.play();
-      break;
-      default:
-        console.log("STEP")
-        step.play();
-      break;
-    }
   }
 
   function write(event) {
