@@ -8,18 +8,7 @@ window.onload = function() {
     var testScript = "" +
     "function run() {" +
     "  forward();" +
-    "  turnRight();" +
-    "  turnRight();" +
-    "  turnRight();" +
-    "  turnRight();" +
     "  forward();" +
-    "  turnLeft();" +
-    "  turnLeft();" +
-    "  turnLeft();" +
-    "  turnLeft();" +
-    "  forward();" +
-    "  turnRight();" +
-    "  turnRight();" +
     "  forward();" +
     "  forward();" +
     "  forward();" +
@@ -45,6 +34,8 @@ window.onload = function() {
         game.load.image('logo', 'images/player.png');
         game.load.image('wall', 'images/wall.png');
         game.load.image('path', 'images/path.png');
+        game.load.image('stone', 'images/pedra.png');
+        game.load.image('box', 'images/box.png');
     }
 
     function create () {
@@ -84,14 +75,21 @@ window.onload = function() {
         y += cellWidth;
       });
 
+      box = game.add.sprite(27, 577, 'box');
+      box.anchor.setTo(0.5, 0.5);
+      stone = game.add.sprite(27, 687, 'stone');
+      stone.anchor.setTo(0.5, 0.5);
       logo = game.add.sprite(0, 0, 'logo');
       logo.anchor.setTo(0.5, 0.5);
       logo.angle = 0;
-      setPlayerInitialPosition(5, 5);
-
-      cursors = game.input.keyboard.createCursorKeys();
+      setPlayerInitialPosition(0, 14);
 
       setNextMove();
+
+      game.physics.startSystem(Phaser.Physics.ARCADE);
+      game.physics.enable(logo, Phaser.Physics.ARCADE);
+      game.physics.enable(stone, Phaser.Physics.ARCADE);
+      game.physics.enable(box, Phaser.Physics.ARCADE);
     }
 
     function setPlayerInitialPosition(x, y){
@@ -101,10 +99,12 @@ window.onload = function() {
 
 
     function update() {
-      console.log(moves[currentMove]);
+
+      game.physics.arcade.collide(logo, stone, collisionStoneHandler);
+      game.physics.arcade.collide(logo, box, collisionBoxHandler);
+
       switch (moves[currentMove]) {
         case "forward":
-          console.log(logo.x, logo.y, targetPosition.x, targetPosition.y);
           if (isMovingForward()) {
             switch(Math.round(logo.angle)) {
               case 0:
@@ -148,7 +148,6 @@ window.onload = function() {
     }
 
     function setNextMove() {
-      console.log("============")
       if (currentMove >= moves.length) { return; }
       switch(moves[currentMove]) {
         case "forward":
@@ -199,7 +198,6 @@ window.onload = function() {
     }
 
     function isTurning() {
-      console.log(logo.angle, targetAngle);
       return Math.round(logo.angle) != targetAngle;
     }
 
@@ -217,4 +215,14 @@ window.onload = function() {
 
     function render() {
     }
+
+  function collisionStoneHandler(logo, stone) {
+    stone.alpha = 0;
+  }
+
+  function collisionBoxHandler(logo, box) {
+    stone.x = box.x;
+    stone.y = box.y;
+    stone.alpha = 1;
+  }
 };
