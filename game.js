@@ -4,11 +4,21 @@ window.onload = function() {
   //  Be sure to replace it with an updated version before you start experimenting with adding your own code.
 
   var initialGrid = [
-    [1,0,1,1,1,1],
-    [1,2,3,1,1,1],
-    [0,1,1,4,1,1],
-    [0,1,1,1,1,1],
-    [0,1,1,1,1,1],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+    [0,1,2,1,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+    [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+    [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+    [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+    [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+    [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+    [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+    [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+    [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+    [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+    [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+    [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
   ];
 
   var grid;
@@ -79,7 +89,7 @@ window.onload = function() {
   var targetPosition = {};
   var targetAngle;
   var isPlaying = false;
-  var initialRobotPosition = { row: 0, column: 0 };
+  var initialRobotPosition = { row: 1, column: 1 };
   var stones = [];
   var box;
   var batteries = [];
@@ -101,7 +111,7 @@ window.onload = function() {
   window.game = game;
 
   function preload () {
-    game.load.image('robot', 'images/player.png');
+    game.load.image('robot', 'images/robot.png');
     game.load.image('wall', 'images/wall.png');
     game.load.image('path', 'images/path.png');
     game.load.image('stone', 'images/pedra.png');
@@ -112,6 +122,7 @@ window.onload = function() {
     game.load.image('play-button', 'images/play-button.png');
     game.load.image('alert', 'images/alert.png');
     game.load.image('alert-button', 'images/alert-button.png');
+    game.load.image('grid-window', 'images/grid-window.png');
 
     game.load.audio('drop_stone', 'sounds/drop_stone.wav');
     game.load.audio('pick_stone', 'sounds/pick_stone.wav');
@@ -220,10 +231,13 @@ window.onload = function() {
   }
 
   function create () {
+    var gridWindow = game.add.sprite(GRID_LEFT, GRID_TOP, 'grid-window');
+    gridWindow.inputEnabled = true;
+    gridWindow.input.enableDrag();
+
     var bg = game.add.bitmapData(GRID_WIDTH, GRID_HEIGHT);
-    gridBackground = game.add.sprite(GRID_LEFT, GRID_TOP, bg);
-    gridBackground.inputEnabled = true;
-    gridBackground.input.enableDrag();
+    gridBackground = game.add.sprite(12, 52, bg);
+    gridWindow.addChild(gridBackground);
 
     robot = game.add.sprite(0, 0, 'robot');
     window.robot = robot;
