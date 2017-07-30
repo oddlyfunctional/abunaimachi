@@ -6,7 +6,7 @@ window.onload = function() {
   var initialGrid = [
     [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
     [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
-    [0,1,2,1,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+    [0,1,2,4,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
     [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
     [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
     [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
@@ -123,6 +123,7 @@ window.onload = function() {
     game.load.image('alert', 'images/alert.png');
     game.load.image('alert-button', 'images/alert-button.png');
     game.load.image('grid-window', 'images/grid-window.png');
+    game.load.image('energy', 'images/energy.png');
 
     game.load.audio('drop_stone', 'sounds/drop_stone.wav');
     game.load.audio('pick_stone', 'sounds/pick_stone.wav');
@@ -227,6 +228,7 @@ window.onload = function() {
     robot.angle = 0;
     setPosition(robot, initialRobotPosition.row, initialRobotPosition.column);
     energy = initialEnergy;
+    setEnergyLabel();
     robot.bringToTop();
   }
 
@@ -277,12 +279,26 @@ window.onload = function() {
     game.input.keyboard.addKeyCapture([Phaser.Keyboard.LEFT, Phaser.Keyboard.RIGHT, Phaser.Keyboard.UP, Phaser.Keyboard.DOWN, Phaser.Keyboard.SPACEBAR]);
     game.input.keyboard.onDownCallback = write;
 
-    game.stage.backgroundColor = 0xcccccc;
-    energyLabel = game.add.text(400, 0, energy);
+    game.stage.backgroundColor = 0xed2d75;
+
+    energyLabel = game.add.group()
+    energyLabel.x = 170
+    energyLabel.y = 890;
+    gridWindow.addChild(energyLabel);
 
     playButton = game.add.button(400, 0, 'play-button', play);
 
     reset();
+  }
+
+  function setEnergyLabel() {
+    while (energyLabel.children.length > 0) {
+      energyLabel.children[0].destroy();
+    }
+
+    for(var i = 0; i < energy; i++) {
+      energyLabel.addChild(game.add.sprite(35 * i, 0, 'energy'));
+    }
   }
 
   function play() {
@@ -308,7 +324,6 @@ window.onload = function() {
   }
 
   function update() {
-    energyLabel.setText(energy);
     if (!isPlaying) { return; }
 
     switch (moves[currentMove]) {
@@ -403,6 +418,7 @@ window.onload = function() {
     }
     currentMove += 1;
     energy = energy - 1;
+    setEnergyLabel();
     switch(moves[currentMove]) {
       case "forward":
         if (canMoveForward()) {
@@ -464,6 +480,8 @@ window.onload = function() {
     battery.destroy();
     batteries.splice(batteries.indexOf(battery), 1);
     grid[robotCoords.y][robotCoords.x] = PATH;
+
+    setEnergyLabel();
   }
 
   function findSprite(sprites) {
