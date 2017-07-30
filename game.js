@@ -39,31 +39,39 @@ window.onload = function() {
 
   var ENERGY_RELOAD = 5;
 
-  var robot;
+  var drop_stone;
+  var pick_stone;
+  var hit_wall;
+  var step;
+  var rotate;
+
   var editor;
   var editorText;
   var editorCursor;
+
+  var robot;
   var speed = 1;
   var testScript = "" +
-  "function run() {\n" +
-  "  turnRight();\n" +
-  "  turnRight();\n" +
-  "  forward();\n" +
-  "  turnLeft();\n" +
-  "  forward();\n" +
-  "  forward();\n" +
-  "  forward();\n" +
-  "  turnRight();\n" +
-  "  forward();\n" +
-  "  turnRight();\n" +
-  "  forward();\n" +
-  "  forward();\n" +
-  "  turnLeft();\n" +
-  "  forward();\n" +
-  "  turnLeft();\n" +
-  "  forward();\n" +
-  "  forward();\n" +
-  "}";
+    "function run() {\n" +
+    "  turnRight();\n" +
+    "  turnRight();\n" +
+    "  forward();\n" +
+    "  turnLeft();\n" +
+    "  forward();\n" +
+    "  forward();\n" +
+    "  forward();\n" +
+    "  turnRight();\n" +
+    "  forward();\n" +
+    "  turnRight();\n" +
+    "  forward();\n" +
+    "  forward();\n" +
+    "  turnLeft();\n" +
+    "  forward();\n" +
+    "  turnLeft();\n" +
+    "  forward();\n" +
+    "  forward();\n" +
+    "}";
+
   var moves = [];
   eval(testScript);
   run();
@@ -71,29 +79,36 @@ window.onload = function() {
   var targetPosition = {};
   var targetAngle;
   var energy = 7;
-  var energyLabel;
-
   var stones = [];
   var boxes = [];
   var batteries = [];
 
+  var energyLabel;
+
   var game = new Phaser.Game(1920, 1080, Phaser.AUTO, '', {
-      preload: preload,
-      create: create,
-      update: update,
-      render: render,
+    preload: preload,
+    create: create,
+    update: update,
+    render: render,
   });
+
   window.game = game;
 
   function preload () {
-      game.load.image('robot', 'images/player.png');
-      game.load.image('wall', 'images/wall.png');
-      game.load.image('path', 'images/path.png');
-      game.load.image('battery', 'images/battery.png');
-      game.load.image('stone', 'images/pedra.png');
-      game.load.image('box', 'images/box.png');
-      game.load.image('editor', 'images/editor.png');
-      game.load.image('cursor', 'images/cursor.png');
+    game.load.image('robot', 'images/player.png');
+    game.load.image('wall', 'images/wall.png');
+    game.load.image('path', 'images/path.png');
+    game.load.image('stone', 'images/pedra.png');
+    game.load.image('box', 'images/box.png');
+    game.load.image('battery', 'images/battery.png');
+    game.load.image('editor', 'images/editor.png');
+    game.load.image('cursor', 'images/cursor.png');
+
+    game.load.audio('drop_stone', 'sounds/drop_stone.wav');
+    game.load.audio('pick_stone', 'sounds/pick_stone.wav');
+    game.load.audio('hit_wall', 'sounds/hit_wall.wav');
+    game.load.audio('step', 'sounds/step.wav');
+    game.load.audio('rotate', 'sounds/rotate.wav');
   }
 
   function create () {
@@ -102,33 +117,33 @@ window.onload = function() {
         switch(cell) {
           case WALL:
             var wall = game.add.sprite(0, 0, 'wall');
-            wall.anchor.setTo(0.5, 0.5);
-            setPosition(wall, row, column);
-            break;
+          wall.anchor.setTo(0.5, 0.5);
+          setPosition(wall, row, column);
+          break;
           case PATH:
             addPath(column, row);
-            break;
+          break;
           case STONE:
             var stone = game.add.sprite(0, 0, 'stone');
-            stone.anchor.setTo(0.5, 0.5);
-            setPosition(stone, row, column);
-            stones.push(stone);
-            addPath(column, row);
-            break;
+          stone.anchor.setTo(0.5, 0.5);
+          setPosition(stone, row, column);
+          stones.push(stone);
+          addPath(column, row);
+          break;
           case BOX:
             var box = game.add.sprite(0, 0, 'box');
-            box.anchor.setTo(0.5, 0.5);
-            setPosition(box, row, column);
-            boxes.push(box);
-            addPath(column, row);
-            break;
+          box.anchor.setTo(0.5, 0.5);
+          setPosition(box, row, column);
+          boxes.push(box);
+          addPath(column, row);
+          break;
           case BATTERY:
             var battery = game.add.sprite(0, 0, 'battery');
-            battery.anchor.setTo(0.5, 0.5);
-            setPosition(battery, row, column);
-            batteries.push(battery);
-            addPath(column, row);
-            break;
+          battery.anchor.setTo(0.5, 0.5);
+          setPosition(battery, row, column);
+          batteries.push(battery);
+          addPath(column, row);
+          break;
         }
       });
     });
@@ -152,12 +167,33 @@ window.onload = function() {
     robot.angle = 0;
     setPosition(robot, 0, 0);
 
-    editor = game.add.sprite(50, 50, 'editor');
-    
+    editor = game.add.sprite(300, 50, 'editor');
+
     editorText = game.add.text(0, 0, testScript);
     editorText.font = "'Courier New', Courier, monospace";
     editorText.fontSize = FONT_WIDTH;
     editor.addChild(editorText);
+
+    game.physics.startSystem(Phaser.Physics.ARCADE);
+    game.physics.enable(robot, Phaser.Physics.ARCADE);
+
+
+    drop_stone = game.add.audio('drop_stone');
+    drop_stone.allowMultiple = true;
+
+    pick_stone = game.add.audio('pick_stone');
+    pick_stone.allowMultiple = true;
+
+    hit_wall = game.add.audio('hit_wall');
+    hit_wall.allowMultiple = true;
+
+    step = game.add.audio('step');
+    step.allowMultiple = true;
+
+    rotate = game.add.audio('rotate');
+    rotate.allowMultiple = true;
+    rotate.addMarker('turn', 0.4, 1.0);
+    rotate.addMarker('step', 0, 0.3);
 
     editorCursor = game.add.sprite(0, 0, 'cursor');
     editorCursor.width = CURSOR_WIDTH;
@@ -176,10 +212,10 @@ window.onload = function() {
   }
 
   function addPath(row, column) {
-      var path = game.add.sprite(0, 0, 'path');
-      path.sendToBack();
-      path.anchor.setTo(0.5, 0.5);
-      setPosition(path, column, row);
+    var path = game.add.sprite(0, 0, 'path');
+    path.sendToBack();
+    path.anchor.setTo(0.5, 0.5);
+    setPosition(path, column, row);
   }
 
   function setPosition(sprite, row, column){
@@ -199,40 +235,40 @@ window.onload = function() {
     switch (moves[currentMove]) {
       case "forward":
         if (isMovingForward()) {
-          switch(Math.round(robot.angle)) {
-            case FACE_UP:
-              robot.y -= speed;
-              break;
-            case FACE_RIGHT:
-              robot.x += speed;
-              break;
-            case FACE_DOWN:
-              robot.y += speed;
-              break;
-            case FACE_LEFT:
-              robot.x -= speed;
-              break;
-            default:
-              throw new Error("Unrecognized angle: " + robot.angle);
-          }
-        } else if (currentMove < moves.length) {
-          setNextMove();
+        switch(Math.round(robot.angle)) {
+          case FACE_UP:
+            robot.y -= speed;
+          break;
+          case FACE_RIGHT:
+            robot.x += speed;
+          break;
+          case FACE_DOWN:
+            robot.y += speed;
+          break;
+          case FACE_LEFT:
+            robot.x -= speed;
+          break;
+          default:
+            throw new Error("Unrecognized angle: " + robot.angle);
         }
-        break;
+      } else if (currentMove < moves.length) {
+        setNextMove();
+      }
+      break;
       case "turnRight":
         if (isTurning()) {
-          robot.angle = Math.round(robot.angle + speed);
-        } else {
-          setNextMove();
-        }
-        break;
+        robot.angle = Math.round(robot.angle + speed);
+      } else {
+        setNextMove();
+      }
+      break;
       case "turnLeft":
         if (isTurning()) {
-          robot.angle = Math.round(robot.angle - speed);
-        } else {
-          setNextMove();
-        }
-        break;
+        robot.angle = Math.round(robot.angle - speed);
+      } else {
+        setNextMove();
+      }
+      break;
     }
   }
 
@@ -248,25 +284,49 @@ window.onload = function() {
     switch(moves[currentMove]) {
       case "forward":
         if (canMoveForward()) {
-          moveForward();
-        } else {
-          currentMove++;
-          setNextMove();
-        }
-        break;
+        moveForward();
+      } else {
+        currentMove++;
+        setNextMove();
+      }
+      break;
       case "turnRight":
-        turn(90);
-        break;
+        rotate.play('turn');
+      turn(90);
+      break;
       case "turnLeft":
-        turn(-90);
-        break;
+        rotate.play('turn');
+      turn(-90);
+      break;
       default:
         throw new Error("Deu merda! " + moves[currentMove]);
     }
 
-
     energyLabel.setText(energy);
   }
+
+  function moveForward() {
+    targetPosition = { x: robot.x, y: robot.y };
+    playNextMoveSound();
+
+    switch(Math.round(robot.angle)) {
+      case FACE_UP:
+        targetPosition.y -= CELL_WIDTH;
+      break;
+      case FACE_RIGHT:
+        targetPosition.x += CELL_WIDTH;
+      break;
+      case FACE_DOWN:
+        targetPosition.y += CELL_WIDTH;
+      break;
+      case FACE_LEFT:
+        targetPosition.x -= CELL_WIDTH;
+      break;
+      default:
+        throw new Error("Unrecognized angle: " + robot.angle);
+    }
+  }
+
 
   function pickBattery() {
     energy += ENERGY_RELOAD;
@@ -295,16 +355,16 @@ window.onload = function() {
     switch(Math.round(robot.angle)) {
       case FACE_UP:
         targetPosition.y -= CELL_WIDTH;
-        break;
+      break;
       case FACE_RIGHT:
         targetPosition.x += CELL_WIDTH;
-        break;
+      break;
       case FACE_DOWN:
         targetPosition.y += CELL_WIDTH;
-        break;
+      break;
       case FACE_LEFT:
         targetPosition.x -= CELL_WIDTH;
-        break;
+      break;
       default:
         throw new Error("Unrecognized angle: " + robot.angle);
     }
@@ -312,11 +372,12 @@ window.onload = function() {
 
   function turn(degrees) {
     var oldAngle = robot.angle;
-
     robot.angle += degrees;
     targetAngle = Math.round(robot.angle);
-
     robot.angle = oldAngle;
+  }
+
+  function render() {
   }
 
   function isMovingForward() {
@@ -352,16 +413,16 @@ window.onload = function() {
     switch(Math.round(robot.angle)) {
       case FACE_UP:
         robotCoords.y--;
-        break;
+      break;
       case FACE_RIGHT:
         robotCoords.x++;
-        break;
+      break;
       case FACE_DOWN:
         robotCoords.y++;
-        break;
+      break;
       case FACE_LEFT:
         robotCoords.x--;
-        break;
+      break;
       default:
         throw new Error("Unrecognized angle: " + robot.angle);
     }
@@ -392,6 +453,7 @@ window.onload = function() {
   }
 
   function collisionStoneHandler(robot, stone) {
+
     robot.addChild(stone);
     stone.x = 0;
     stone.y = 0;
@@ -399,10 +461,25 @@ window.onload = function() {
 
   function collisionBoxHandler(robot, box) {
     var stone = robot.removeChildAt(0);
+
     stone.x = box.x;
     stone.y = box.y;
     boxes.splice(boxes.indexOf(box), 1);
     stones.splice(stones.indexOf(stone), 1);
+  }
+
+  function playNextMoveSound() {
+    switch(nextCell()) {
+      case STONE:
+        pick_stone.play();
+      break;
+      case BOX:
+        drop_stone.play();
+      break;
+      default:
+        step.play();
+      break;
+    }
   }
 
   function write(event) {
@@ -415,12 +492,12 @@ window.onload = function() {
     var isDown = keyCode == 40;
     var isLeft = keyCode == 37;
     var isPrintable = 
-        (keyCode > 47 && keyCode < 58)   || // number keys
-        keyCode == 32 || keyCode == 13   || // spacebar & return key(s) (if you want to allow carriage returns)
-        (keyCode > 64 && keyCode < 91)   || // letter keys
-        (keyCode > 95 && keyCode < 112)  || // numpad keys
-        (keyCode > 185 && keyCode < 193) || // ;=,-./` (in order)
-        (keyCode > 218 && keyCode < 223);   // [\]' (in order)
+      (keyCode > 47 && keyCode < 58)   || // number keys
+      keyCode == 32 || keyCode == 13   || // spacebar & return key(s) (if you want to allow carriage returns)
+      (keyCode > 64 && keyCode < 91)   || // letter keys
+      (keyCode > 95 && keyCode < 112)  || // numpad keys
+      (keyCode > 185 && keyCode < 193) || // ;=,-./` (in order)
+      (keyCode > 218 && keyCode < 223);   // [\]' (in order)
 
     var coords = getCursorCoordinates();
     if (isReturn) {
