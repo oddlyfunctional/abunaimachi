@@ -96,6 +96,7 @@ window.onload = function() {
   var paths = [];
   var walls = [];
   var gridBackground;
+  var taskbar;
 
   var initialEnergy = 7;
   var energy = initialEnergy;
@@ -124,6 +125,7 @@ window.onload = function() {
     game.load.image('alert-button', 'images/alert-button.png');
     game.load.image('grid-window', 'images/grid-window.png');
     game.load.image('energy', 'images/energy.png');
+    game.load.image('taskbar', 'images/taskbar.png');
 
     game.load.audio('drop_stone', 'sounds/drop_stone.wav');
     game.load.audio('pick_stone', 'sounds/pick_stone.wav');
@@ -230,6 +232,7 @@ window.onload = function() {
     energy = initialEnergy;
     setEnergyLabel();
     robot.bringToTop();
+    taskbar.bringToTop();
   }
 
   function create () {
@@ -287,6 +290,9 @@ window.onload = function() {
     gridWindow.addChild(energyLabel);
 
     playButton = game.add.button(400, 0, 'play-button', play);
+
+    taskbar = game.add.sprite(0, game.height, 'taskbar');
+    taskbar.anchor.set(0, 1);
 
     reset();
   }
