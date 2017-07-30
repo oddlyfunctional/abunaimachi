@@ -29,6 +29,12 @@ window.onload = function() {
     var GRID_BOTTOM = GRID_TOP + GRID_HEIGHT;
     var GRID_RIGHT = GRID_LEFT + GRID_WIDTH;
 
+    var drop_stone;
+    var pick_stone;
+    var hit_wall;
+    var step;
+    var rotate;
+
     var robot;
     var speed = 1;
     var testScript = "" +
@@ -51,6 +57,7 @@ window.onload = function() {
     "  forward();" +
     "  forward();" +
     "}";
+
     var moves = [];
     eval(testScript);
     run();
@@ -74,6 +81,12 @@ window.onload = function() {
         game.load.image('path', 'images/path.png');
         game.load.image('stone', 'images/pedra.png');
         game.load.image('box', 'images/box.png');
+
+        game.load.audio('drop_stone', 'sounds/drop_stone.wav');
+        game.load.audio('pick_stone', 'sounds/pick_stone.wav');
+        game.load.audio('hit_wall', 'sounds/hit_wall.wav');
+        game.load.audio('step', 'sounds/step.wav');
+        game.load.audio('rotate', 'sounds/rotate.wav');
     }
 
     function create () {
@@ -121,10 +134,29 @@ window.onload = function() {
       robot.angle = 0;
       setPosition(robot, 0, 0);
 
-      setNextMove();
 
       game.physics.startSystem(Phaser.Physics.ARCADE);
       game.physics.enable(robot, Phaser.Physics.ARCADE);
+
+
+      drop_stone = game.add.audio('drop_stone');
+      drop_stone.allowMultiple = true;
+
+      pick_stone = game.add.audio('pick_stone');
+      pick_stone.allowMultiple = true;
+
+      hit_wall = game.add.audio('hit_wall');
+      hit_wall.allowMultiple = true;
+
+      step = game.add.audio('step');
+      step.allowMultiple = true;
+
+      rotate = game.add.audio('rotate');
+      rotate.allowMultiple = true;
+      rotate.addMarker('turn', 0.4, 1.0);
+      rotate.addMarker('step', 0, 0.3);
+
+      setNextMove();
     }
 
     function addPath(row, column) {
@@ -204,9 +236,11 @@ window.onload = function() {
           }
           break;
         case "turnRight":
+          rotate.play('turn');
           turn(90);
           break;
         case "turnLeft":
+          rotate.play('turn');
           turn(-90);
           break;
         default:
@@ -220,6 +254,9 @@ window.onload = function() {
 
     function moveForward() {
       targetPosition = { x: robot.x, y: robot.y };
+
+      playNextMoveSound();
+
       switch(Math.round(robot.angle)) {
         case FACE_UP:
           targetPosition.y -= CELL_WIDTH;
@@ -268,7 +305,6 @@ window.onload = function() {
     }
 
     function render() {
-      game.debug.bodyInfo(robot);
     }
 
     function canMoveForward() {
@@ -308,6 +344,7 @@ window.onload = function() {
     }
 
   function collisionStoneHandler(robot, stone) {
+
     robot.addChild(stone);
     stone.x = 0;
     stone.y = 0;
@@ -315,9 +352,24 @@ window.onload = function() {
 
   function collisionBoxHandler(robot, box) {
     var stone = robot.removeChildAt(0);
+
     stone.x = box.x;
     stone.y = box.y;
     boxes.splice(boxes.indexOf(box), 1);
     stones.splice(stones.indexOf(stone), 1);
+  }
+
+  function playNextMoveSound() {
+    switch(nextCell()) {
+      case STONE:
+        pick_stone.play();
+        break;
+      case BOX:
+        drop_stone.play();
+        break;
+      default:
+        step.play();
+        break;
+    }
   }
 };
