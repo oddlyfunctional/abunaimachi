@@ -4,12 +4,14 @@ window.onload = function() {
     //  Be sure to replace it with an updated version before you start experimenting with adding your own code.
 
     var grid = [
-      [1,0,1],
-      [1,1,1],
-      [0,1,1]
+      [1,0,1,1,1,1],
+      [1,1,1,1,1,1],
+      [0,1,1,1,1,1],
+      [0,1,1,1,1,1],
+      [0,1,1,1,1,1],
     ];
 
-    var cellWidth = 55;
+    var CELL_WIDTH = 55;
     var WALL = 0;
     var PATH = 1;
 
@@ -20,31 +22,32 @@ window.onload = function() {
 
     var GRID_LEFT = 0;
     var GRID_TOP = 0;
-    var GRID_WIDTH = grid[0].length * cellWidth;
-    var GRID_HEIGHT = grid.length * cellWidth;
+    var GRID_WIDTH = grid[0].length * CELL_WIDTH;
+    var GRID_HEIGHT = grid.length * CELL_WIDTH;
     var GRID_BOTTOM = GRID_TOP + GRID_HEIGHT;
     var GRID_RIGHT = GRID_LEFT + GRID_WIDTH;
 
-    var cursors;
     var robot;
     var speed = 1;
     var testScript = "" +
     "function run() {" +
     "  turnRight();" +
-    "  forward();" +
     "  turnRight();" +
     "  forward();" +
-    "  forward();" +
     "  turnLeft();" +
+    "  forward();" +
+    "  forward();" +
+    "  forward();" +
+    "  forward();" +
     "  forward();" +
     "}";
     var moves = [];
     eval(testScript);
     run();
-    console.log(moves);
-    var currentMove = 0;
+    var currentMove = -1;
     var targetPosition = {};
     var targetAngle;
+    var energy = 99;
 
     var game = new Phaser.Game(1100, 825, Phaser.AUTO, '', {
         preload: preload,
@@ -57,6 +60,8 @@ window.onload = function() {
         game.load.image('robot', 'images/player.png');
         game.load.image('wall', 'images/wall.png');
         game.load.image('path', 'images/path.png');
+        game.load.image('stone', 'images/pedra.png');
+        game.load.image('box', 'images/box.png');
     }
 
     function create () {
@@ -71,51 +76,64 @@ window.onload = function() {
             game.add.sprite(x, y, 'path');
           }
 
-          x += cellWidth;
+          x += CELL_WIDTH;
         });
 
         x = 0
-        y += cellWidth;
+        y += CELL_WIDTH;
       });
 
       robot = game.add.sprite(0, 0, 'robot');
       robot.anchor.setTo(0.5, 0.5);
       robot.angle = 0;
-      setPlayerInitialPosition(0, 0);
+      setPosition(robot, 0, 0);
 
-      cursors = game.input.keyboard.createCursorKeys();
+      box = game.add.sprite(0, 0, 'box');
+      box.anchor.setTo(0.5, 0.5);
+      setPosition(box, 1, 3);
+
+      stone = game.add.sprite(27, 687, 'stone');
+      stone.anchor.setTo(0.5, 0.5);
+      setPosition(stone, 1, 1);
 
       setNextMove();
+
+      game.physics.startSystem(Phaser.Physics.ARCADE);
+      game.physics.enable(robot, Phaser.Physics.ARCADE);
+      game.physics.enable(stone, Phaser.Physics.ARCADE);
+      game.physics.enable(box, Phaser.Physics.ARCADE);
     }
 
-    function setPlayerInitialPosition(x, y){
-      robot.x = (55 * x) + 27;
-      robot.y = (55 * y) + 27;
+    function setPosition(sprite, row, column){
+      sprite.x = (55 * column) + 27;
+      sprite.y = (55 * row) + 27;
     }
 
 
     function update() {
+      game.physics.arcade.collide(robot, stone, collisionStoneHandler);
+      game.physics.arcade.collide(robot, box, collisionBoxHandler);
+
       switch (moves[currentMove]) {
         case "forward":
           if (isMovingForward()) {
             switch(Math.round(robot.angle)) {
-              case FACE_UP: //FACE_UP
+              case FACE_UP:
                 robot.y -= speed;
                 break;
-              case FACE_RIGHT: //FACE_RIGHT
+              case FACE_RIGHT:
                 robot.x += speed;
                 break;
-              case FACE_DOWN: //FACE_DOWN
+              case FACE_DOWN:
                 robot.y += speed;
                 break;
-              case FACE_LEFT: //FACE_LEFT
+              case FACE_LEFT:
                 robot.x -= speed;
                 break;
               default:
                 throw new Error("Unrecognized angle: " + robot.angle);
             }
           } else if (currentMove < moves.length) {
-            currentMove += 1;
             setNextMove();
           }
           break;
@@ -123,7 +141,6 @@ window.onload = function() {
           if (isTurning()) {
             robot.angle = Math.round(robot.angle + speed);
           } else {
-            currentMove += 1;
             setNextMove();
           }
           break;
@@ -131,7 +148,6 @@ window.onload = function() {
           if (isTurning()) {
             robot.angle = Math.round(robot.angle - speed);
           } else {
-            currentMove += 1;
             setNextMove();
           }
           break;
@@ -139,7 +155,10 @@ window.onload = function() {
     }
 
     function setNextMove() {
-      if (currentMove >= moves.length) { return; }
+      if (currentMove + 1 >= moves.length) { return; }
+      if (!hasEnergy()) { return; }
+      currentMove += 1;
+      energy = energy - 1;
       switch(moves[currentMove]) {
         case "forward":
           if (canMoveForward()) {
@@ -160,20 +179,24 @@ window.onload = function() {
       }
     }
 
+    function hasEnergy() {
+      return energy >= 1;
+    }
+
     function moveForward() {
       targetPosition = { x: robot.x, y: robot.y };
       switch(Math.round(robot.angle)) {
         case FACE_UP:
-          targetPosition.y -= cellWidth;
+          targetPosition.y -= CELL_WIDTH;
           break;
         case FACE_RIGHT:
-          targetPosition.x += cellWidth;
+          targetPosition.x += CELL_WIDTH;
           break;
         case FACE_DOWN:
-          targetPosition.y += cellWidth;
+          targetPosition.y += CELL_WIDTH;
           break;
         case FACE_LEFT:
-          targetPosition.x -= cellWidth;
+          targetPosition.x -= CELL_WIDTH;
           break;
         default:
           throw new Error("Unrecognized angle: " + robot.angle);
@@ -214,14 +237,11 @@ window.onload = function() {
     }
 
     function canMoveForward() {
-      var a = nextCell();
-      console.log(a);
-      return a != WALL;
+      return nextCell() != WALL;
     }
 
     function nextCell() {
       var robotCoords = getRobotCoordinates();
-      console.log("player:", robotCoords);
       switch(Math.round(robot.angle)) {
         case FACE_UP:
           robotCoords.y--;
@@ -239,7 +259,6 @@ window.onload = function() {
           throw new Error("Unrecognized angle: " + robot.angle);
       }
 
-      console.log("next cell:", robotCoords);
       return grid[robotCoords.y][robotCoords.x];
     }
 
@@ -248,8 +267,18 @@ window.onload = function() {
       var relativeY = robot.y - GRID_TOP;
 
       return {
-        x: Math.floor(relativeX / cellWidth),
-        y: Math.floor(relativeY / cellWidth),
+        x: Math.floor(relativeX / CELL_WIDTH),
+        y: Math.floor(relativeY / CELL_WIDTH),
       };
     }
+
+  function collisionStoneHandler(robot, stone) {
+    stone.alpha = 0;
+  }
+
+  function collisionBoxHandler(robot, box) {
+    stone.x = box.x;
+    stone.y = box.y;
+    stone.alpha = 1;
+  }
 };
