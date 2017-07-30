@@ -5,15 +5,17 @@ window.onload = function() {
 
     var grid = [
       [1,0,1,1,1,1],
-      [1,1,1,1,1,1],
+      [1,2,1,3,1,1],
       [0,1,1,1,1,1],
-      [0,1,1,1,1,1],
+      [0,2,1,3,1,1],
       [0,1,1,1,1,1],
     ];
 
     var CELL_WIDTH = 55;
     var WALL = 0;
     var PATH = 1;
+    var STONE = 2;
+    var BOX = 3;
 
     var FACE_UP = 0;
     var FACE_RIGHT = 90;
@@ -38,6 +40,14 @@ window.onload = function() {
     "  forward();" +
     "  forward();" +
     "  forward();" +
+    "  turnRight();" +
+    "  forward();" +
+    "  turnRight();" +
+    "  forward();" +
+    "  forward();" +
+    "  turnLeft();" +
+    "  forward();" +
+    "  turnLeft();" +
     "  forward();" +
     "  forward();" +
     "}";
@@ -48,6 +58,8 @@ window.onload = function() {
     var targetPosition = {};
     var targetAngle;
     var energy = 99;
+    var stones = [];
+    var boxes = [];
 
     var game = new Phaser.Game(1100, 825, Phaser.AUTO, '', {
         preload: preload,
@@ -65,22 +77,43 @@ window.onload = function() {
     }
 
     function create () {
-      var x = 0;
-      var y = 0;
-
-      grid.forEach(function(row) {
-        row.forEach(function(cell) {
-          if (cell == 0) {
-            var newWall = game.add.sprite(x, y, 'wall');
-          } else {
-            game.add.sprite(x, y, 'path');
+      grid.forEach(function(cells, row) {
+        cells.forEach(function(cell, column) {
+          switch(cell) {
+            case WALL:
+                var wall = game.add.sprite(0, 0, 'wall');
+                wall.anchor.setTo(0.5, 0.5);
+                setPosition(wall, row, column);
+                break;
+            case PATH:
+                addPath(column, row);
+                break;
+            case STONE:
+                var stone = game.add.sprite(0, 0, 'stone');
+                stone.anchor.setTo(0.5, 0.5);
+                setPosition(stone, row, column);
+                stones.push(stone);
+                addPath(column, row);
+                break;
+            case BOX:
+                var box = game.add.sprite(0, 0, 'box');
+                box.anchor.setTo(0.5, 0.5);
+                setPosition(box, row, column);
+                boxes.push(box);
+                addPath(column, row);
+                break;
           }
-
-          x += CELL_WIDTH;
         });
+      });
 
-        x = 0
-        y += CELL_WIDTH;
+      boxes.forEach(function(box) {
+        box.bringToTop();
+        game.physics.enable(box, Phaser.Physics.ARCADE);
+      });
+
+      stones.forEach(function(stone) {
+        stone.bringToTop();
+        game.physics.enable(stone, Phaser.Physics.ARCADE);
       });
 
       robot = game.add.sprite(0, 0, 'robot');
@@ -88,20 +121,17 @@ window.onload = function() {
       robot.angle = 0;
       setPosition(robot, 0, 0);
 
-      box = game.add.sprite(0, 0, 'box');
-      box.anchor.setTo(0.5, 0.5);
-      setPosition(box, 1, 3);
-
-      stone = game.add.sprite(27, 687, 'stone');
-      stone.anchor.setTo(0.5, 0.5);
-      setPosition(stone, 1, 1);
-
       setNextMove();
 
       game.physics.startSystem(Phaser.Physics.ARCADE);
       game.physics.enable(robot, Phaser.Physics.ARCADE);
-      game.physics.enable(stone, Phaser.Physics.ARCADE);
-      game.physics.enable(box, Phaser.Physics.ARCADE);
+    }
+
+    function addPath(row, column) {
+        var path = game.add.sprite(0, 0, 'path');
+        path.sendToBack();
+        path.anchor.setTo(0.5, 0.5);
+        setPosition(path, column, row);
     }
 
     function setPosition(sprite, row, column){
@@ -111,8 +141,13 @@ window.onload = function() {
 
 
     function update() {
-      game.physics.arcade.collide(robot, stone, collisionStoneHandler);
-      game.physics.arcade.collide(robot, box, collisionBoxHandler);
+      stones.forEach(function(stone) {
+        game.physics.arcade.collide(robot, stone, collisionStoneHandler);
+      });
+
+      boxes.forEach(function(box) {
+        game.physics.arcade.collide(robot, box, collisionBoxHandler);
+      });
 
       switch (moves[currentMove]) {
         case "forward":
@@ -273,12 +308,16 @@ window.onload = function() {
     }
 
   function collisionStoneHandler(robot, stone) {
-    stone.alpha = 0;
+    robot.addChild(stone);
+    stone.x = 0;
+    stone.y = 0;
   }
 
   function collisionBoxHandler(robot, box) {
+    var stone = robot.removeChildAt(0);
     stone.x = box.x;
     stone.y = box.y;
-    stone.alpha = 1;
+    boxes.splice(boxes.indexOf(box), 1);
+    stones.splice(stones.indexOf(stone), 1);
   }
 };
