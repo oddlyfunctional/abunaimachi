@@ -25,8 +25,8 @@ window.onload = function() {
   var FACE_DOWN = -180;
   var FACE_LEFT = -90;
 
-  var GRID_LEFT = 0;
-  var GRID_TOP = 0;
+  var GRID_LEFT = 700;
+  var GRID_TOP = 200;
   var GRID_WIDTH = initialGrid[0].length * CELL_WIDTH;
   var GRID_HEIGHT = initialGrid.length * CELL_WIDTH;
   var GRID_BOTTOM = GRID_TOP + GRID_HEIGHT;
@@ -85,6 +85,7 @@ window.onload = function() {
   var batteries = [];
   var paths = [];
   var walls = [];
+  var gridBackground;
 
   var initialEnergy = 7;
   var energy = initialEnergy;
@@ -139,6 +140,10 @@ window.onload = function() {
     boxes = [];
     paths = [];
     walls = [];
+
+    var bg = game.add.bitmapData(GRID_WIDTH, GRID_HEIGHT);
+    gridBackground = game.add.sprite(GRID_LEFT, GRID_TOP, bg);
+
     grid.forEach(function(cells, row) {
       cells.forEach(function(cell, column) {
         switch(cell) {
@@ -147,34 +152,53 @@ window.onload = function() {
             wall.anchor.setTo(0.5, 0.5);
             setPosition(wall, row, column);
             walls.push(wall);
+            gridBackground.addChild(wall);
             break;
           case PATH:
-            paths.push(addPath(column, row));
+            var path = addPath(column, row);
+            paths.push(path);
+            gridBackground.addChild(path);
             break;
           case STONE:
             var stone = game.add.sprite(0, 0, 'stone');
             stone.anchor.setTo(0.5, 0.5);
             setPosition(stone, row, column);
             stones.push(stone);
-            paths.push(addPath(column, row));
+
+            var path = addPath(column, row);
+            paths.push(path);
+            gridBackground.addChild(path);
+            gridBackground.addChild(stone);
             break;
           case BOX:
             var box = game.add.sprite(0, 0, 'box');
             box.anchor.setTo(0.5, 0.5);
             setPosition(box, row, column);
             boxes.push(box);
-            paths.push(addPath(column, row));
+
+            var path = addPath(column, row);
+            paths.push(path);
+            gridBackground.addChild(path);
+            gridBackground.addChild(box);
             break;
           case BATTERY:
             var battery = game.add.sprite(0, 0, 'battery');
             battery.anchor.setTo(0.5, 0.5);
             setPosition(battery, row, column);
             batteries.push(battery);
-            paths.push(addPath(column, row));
+
+            var path = addPath(column, row);
+            paths.push(path);
+            gridBackground.addChild(path);
+            gridBackground.addChild(battery);
             break;
         }
       });
     });
+
+    gridBackground.addChild(robot);
+    gridBackground.moveDown();
+    window.gridBackground = gridBackground;
 
     boxes.forEach(function(box) {
       box.bringToTop();
@@ -484,8 +508,8 @@ window.onload = function() {
   }
 
   function getSpriteCoordinates(sprite) {
-    var relativeX = sprite.x - GRID_LEFT;
-    var relativeY = sprite.y - GRID_TOP;
+    var relativeX = sprite.x;
+    var relativeY = sprite.y;
 
     return {
       x: Math.floor(relativeX / CELL_WIDTH),
@@ -502,7 +526,7 @@ window.onload = function() {
     var isRight = keyCode == 39;
     var isDown = keyCode == 40;
     var isLeft = keyCode == 37;
-    var isPrintable = 
+    var isPrintable =
       (keyCode > 47 && keyCode < 58)   || // number keys
       keyCode == 32 || keyCode == 13   || // spacebar & return key(s) (if you want to allow carriage returns)
       (keyCode > 64 && keyCode < 91)   || // letter keys
