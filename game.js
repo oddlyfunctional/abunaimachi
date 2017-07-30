@@ -141,9 +141,6 @@ window.onload = function() {
     paths = [];
     walls = [];
 
-    var bg = game.add.bitmapData(GRID_WIDTH, GRID_HEIGHT);
-    gridBackground = game.add.sprite(GRID_LEFT, GRID_TOP, bg);
-
     grid.forEach(function(cells, row) {
       cells.forEach(function(cell, column) {
         switch(cell) {
@@ -221,11 +218,18 @@ window.onload = function() {
   }
 
   function create () {
+    var bg = game.add.bitmapData(GRID_WIDTH, GRID_HEIGHT);
+    gridBackground = game.add.sprite(GRID_LEFT, GRID_TOP, bg);
+    gridBackground.inputEnabled = true;
+    gridBackground.input.enableDrag();
+
     robot = game.add.sprite(0, 0, 'robot');
     window.robot = robot;
     robot.anchor.setTo(0.5, 0.5);
 
     editor = game.add.sprite(300, 50, 'editor');
+    editor.inputEnabled = true;
+    editor.input.enableDrag();
 
     editorText = game.add.text(0, 0, testScript);
     editorText.font = "'Courier New', Courier, monospace";
