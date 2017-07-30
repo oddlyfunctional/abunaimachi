@@ -350,26 +350,6 @@ window.onload = function() {
     return energy >= 1;
   }
 
-  function moveForward() {
-    targetPosition = { x: robot.x, y: robot.y };
-    switch(Math.round(robot.angle)) {
-      case FACE_UP:
-        targetPosition.y -= CELL_WIDTH;
-      break;
-      case FACE_RIGHT:
-        targetPosition.x += CELL_WIDTH;
-      break;
-      case FACE_DOWN:
-        targetPosition.y += CELL_WIDTH;
-      break;
-      case FACE_LEFT:
-        targetPosition.x -= CELL_WIDTH;
-      break;
-      default:
-        throw new Error("Unrecognized angle: " + robot.angle);
-    }
-  }
-
   function turn(degrees) {
     var oldAngle = robot.angle;
     robot.angle += degrees;
@@ -469,14 +449,18 @@ window.onload = function() {
   }
 
   function playNextMoveSound() {
+    console.log("WTF")
     switch(nextCell()) {
       case STONE:
+        console.log("STONE")
         pick_stone.play();
       break;
       case BOX:
+        console.log("BOX")
         drop_stone.play();
       break;
       default:
+        console.log("STEP")
         step.play();
       break;
     }
