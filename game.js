@@ -97,7 +97,7 @@ window.onload = function() {
   var walls = [];
   var gridBackground;
 
-  var initialEnergy = 3;
+  var initialEnergy = 7;
   var energy = initialEnergy;
   var energyLabel;
 
@@ -114,7 +114,7 @@ window.onload = function() {
     game.load.image('robot', 'images/robot.png');
     game.load.image('wall', 'images/wall.png');
     game.load.image('path', 'images/path.png');
-    game.load.image('stone', 'images/pedra.png');
+    game.load.image('stone', 'images/stone.png');
     game.load.image('box', 'images/box.png');
     game.load.image('battery', 'images/battery.png');
     game.load.image('editor', 'images/editor.png');
@@ -352,7 +352,6 @@ window.onload = function() {
   }
 
   function pickStone() {
-    if (allStonesinBox()) { return alert('Parabens, voce venceu'); }
     if (canMoveForward()) {
       var stone = findSprite(stones);
       var robotCoords = getRobotCoordinates();
@@ -380,7 +379,6 @@ window.onload = function() {
   }
 
   function setNextMove() {
-    if (allStonesinBox()) { return console.log('Parabens, voce venceu!'); }
     switch (getCurrentCell()) {
       case BATTERY:
         pickBattery();
@@ -391,6 +389,11 @@ window.onload = function() {
       case BOX:
         dropStone();
         break;
+    }
+
+    if (allStonesinBox()) {
+      createAlert("Congratz, you saved the world!", "Weeee!!", reset);
+      return;
     }
 
     if (currentMove + 1 >= moves.length) { return; }
