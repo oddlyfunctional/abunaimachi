@@ -5,7 +5,7 @@ window.onload = function() {
 
   var initialGrid = [
     [1,0,1,1,1,1],
-    [1,2,4,3,1,1],
+    [1,2,2,3,1,1],
     [0,1,1,4,1,1],
     [0,2,1,3,1,1],
     [0,1,1,1,1,1],
@@ -87,7 +87,7 @@ window.onload = function() {
   var walls = [];
   var gridBackground;
 
-  var initialEnergy = 7;
+  var initialEnergy = 99;
   var energy = initialEnergy;
   var energyLabel;
 
@@ -330,14 +330,19 @@ window.onload = function() {
   }
 
   function pickStone() {
-    var stone = findSprite(stones);
-    var robotCoords = getRobotCoordinates();
+    if (canMoveForward()) {
+      var stone = findSprite(stones);
+      var robotCoords = getRobotCoordinates();
 
-    robot.addChild(stone);
-    stone.x = 0;
-    stone.y = 0;
-    grid[robotCoords.y][robotCoords.x] = PATH;
-    pick_stone.play();
+      robot.addChild(stone);
+      stone.x = 0;
+      stone.y = 0;
+      grid[robotCoords.y][robotCoords.x] = PATH;
+      pick_stone.play();
+    } else {
+      hit_wall.play();
+      setNextMove();
+    }
   }
 
   function dropStone() {
@@ -412,7 +417,6 @@ window.onload = function() {
     }
   }
 
-
   function pickBattery() {
     energy += ENERGY_RELOAD;
     var battery = findSprite(batteries);
@@ -470,7 +474,16 @@ window.onload = function() {
   }
 
   function canMoveForward() {
-    return nextCell() != WALL;
+    if ((nextCell() == WALL) || (nextCell() == STONE && hasStone())) {
+      return false;
+    } else {
+      return true;
+    }
+    // return nextCell() != WALL;
+  }
+
+  function hasStone() {
+    return robot.children.length > 0;
   }
 
   function nextCell() {
