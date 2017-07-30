@@ -30,29 +30,39 @@ window.onload = function() {
   var GRID_BOTTOM = GRID_TOP + GRID_HEIGHT;
   var GRID_RIGHT = GRID_LEFT + GRID_WIDTH;
 
+  var FONT_WIDTH = 20;
+  var FONT_HEIGHT = 20;
+  var CURSOR_WIDTH = 12;
+  var CURSOR_HEIGHT = 26;
+  var CHARS_PER_LINE = 23;
+  var LINES = 24;
+
   var ENERGY_RELOAD = 5;
 
   var robot;
+  var editor;
+  var editorText;
+  var editorCursor;
   var speed = 1;
   var testScript = "" +
-  "function run() {" +
-  "  turnRight();" +
-  "  turnRight();" +
-  "  forward();" +
-  "  turnLeft();" +
-  "  forward();" +
-  "  forward();" +
-  "  forward();" +
-  "  turnRight();" +
-  "  forward();" +
-  "  turnRight();" +
-  "  forward();" +
-  "  forward();" +
-  "  turnLeft();" +
-  "  forward();" +
-  "  turnLeft();" +
-  "  forward();" +
-  "  forward();" +
+  "function run() {\n" +
+  "  turnRight();\n" +
+  "  turnRight();\n" +
+  "  forward();\n" +
+  "  turnLeft();\n" +
+  "  forward();\n" +
+  "  forward();\n" +
+  "  forward();\n" +
+  "  turnRight();\n" +
+  "  forward();\n" +
+  "  turnRight();\n" +
+  "  forward();\n" +
+  "  forward();\n" +
+  "  turnLeft();\n" +
+  "  forward();\n" +
+  "  turnLeft();\n" +
+  "  forward();\n" +
+  "  forward();\n" +
   "}";
   var moves = [];
   eval(testScript);
@@ -67,7 +77,7 @@ window.onload = function() {
   var boxes = [];
   var batteries = [];
 
-  var game = new Phaser.Game(1100, 825, Phaser.AUTO, '', {
+  var game = new Phaser.Game(1920, 1080, Phaser.AUTO, '', {
       preload: preload,
       create: create,
       update: update,
@@ -82,6 +92,8 @@ window.onload = function() {
       game.load.image('battery', 'images/battery.png');
       game.load.image('stone', 'images/pedra.png');
       game.load.image('box', 'images/box.png');
+      game.load.image('editor', 'images/editor.png');
+      game.load.image('cursor', 'images/cursor.png');
   }
 
   function create () {
@@ -140,6 +152,20 @@ window.onload = function() {
     robot.angle = 0;
     setPosition(robot, 0, 0);
 
+    editor = game.add.sprite(50, 50, 'editor');
+    
+    editorText = game.add.text(0, 0, testScript);
+    editorText.font = "'Courier New', Courier, monospace";
+    editorText.fontSize = FONT_WIDTH;
+    editor.addChild(editorText);
+
+    editorCursor = game.add.sprite(0, 0, 'cursor');
+    editorCursor.width = CURSOR_WIDTH;
+    editorCursor.height = CURSOR_HEIGHT;
+    editor.addChild(editorCursor);
+
+    game.input.keyboard.addKeyCapture([Phaser.Keyboard.LEFT, Phaser.Keyboard.RIGHT, Phaser.Keyboard.UP, Phaser.Keyboard.DOWN, Phaser.Keyboard.SPACEBAR]);
+    game.input.keyboard.onDownCallback = write;
 
     game.physics.startSystem(Phaser.Physics.ARCADE);
     game.physics.enable(robot, Phaser.Physics.ARCADE);
@@ -160,7 +186,6 @@ window.onload = function() {
     sprite.x = (55 * column) + 27;
     sprite.y = (55 * row) + 27;
   }
-
 
   function update() {
     stones.forEach(function(stone) {
@@ -378,5 +403,106 @@ window.onload = function() {
     stone.y = box.y;
     boxes.splice(boxes.indexOf(box), 1);
     stones.splice(stones.indexOf(stone), 1);
+  }
+
+  function write(event) {
+    var keyCode = event.keyCode;
+
+    var isBackspace = keyCode == 8;
+    var isReturn = keyCode == 13;
+    var isUp = keyCode == 38;
+    var isRight = keyCode == 39;
+    var isDown = keyCode == 40;
+    var isLeft = keyCode == 37;
+    var isPrintable = 
+        (keyCode > 47 && keyCode < 58)   || // number keys
+        keyCode == 32 || keyCode == 13   || // spacebar & return key(s) (if you want to allow carriage returns)
+        (keyCode > 64 && keyCode < 91)   || // letter keys
+        (keyCode > 95 && keyCode < 112)  || // numpad keys
+        (keyCode > 185 && keyCode < 193) || // ;=,-./` (in order)
+        (keyCode > 218 && keyCode < 223);   // [\]' (in order)
+
+    var coords = getCursorCoordinates();
+    if (isReturn) {
+      writeChar("\n");
+      setCursorCoordinates(0, coords.y + 1);
+    } else if (isPrintable) {
+      writeChar(event.key);
+      setCursorCoordinates(coords.x + 1, coords.y);
+    } else if (isBackspace) {
+      deleteChar();
+    } else if (isUp) {
+      setCursorCoordinates(coords.x, coords.y - 1);
+    } else if (isRight) {
+      setCursorCoordinates(coords.x + 1, coords.y);
+    } else if (isDown) {
+      setCursorCoordinates(coords.x, coords.y + 1);
+    } else if (isLeft) {
+      setCursorCoordinates(coords.x - 1, coords.y);
+    }
+  };
+
+  function writeChar(char) {
+    var lines = getLines();
+    var coords = getCursorCoordinates();
+    var line = lines[coords.y];
+    if (line.length >= CHARS_PER_LINE) { return; }
+    line = line.substr(0, coords.x) + char + line.substr(coords.x);
+    lines[coords.y] = line;
+    editorText.text = lines.join("\n");
+  }
+
+  function deleteChar() {
+    var lines = getLines();
+    var coords = getCursorCoordinates();
+    var line = lines[coords.y];
+
+    if (coords.x > 0) {
+      line = line.substr(0, coords.x - 1) + line.substr(coords.x);
+      lines[coords.y] = line;
+      setCursorCoordinates(coords.x - 1, coords.y);
+    } else {
+      var previousLine = lines[coords.y - 1];
+      var previousLength = previousLine.length;
+      previousLine = previousLine + line;
+      lines[coords.y - 1] = previousLine;
+      lines.splice(coords.y, 1);
+      setCursorCoordinates(previousLength, coords.y - 1);
+    }
+    editorText.text = lines.join("\n");
+  }
+
+  function setCursorCoordinates(column, row) {
+    var lines = getLines();
+    if (column < 0) {
+      row -= 1;
+      var line = lines[row];
+      column = line && line.length || 0;
+    } else if (column > CHARS_PER_LINE) {
+      column = CHARS_PER_LINE;
+    } else if (lines[row] && column > lines[row].length && row < lines.length) {
+      column = 0;
+      row += 1;
+    }
+
+    if (row < 0) {
+      row = 0;
+    } else if (row > lines.length - 1) {
+      row = lines.length - 1;
+    }
+
+    editorCursor.x = column * CURSOR_WIDTH;
+    editorCursor.y = row * CURSOR_HEIGHT;
+  }
+
+  function getCursorCoordinates() {
+    return {
+      x: Math.floor((editorCursor.x + 1) / CURSOR_WIDTH),
+      y: Math.floor((editorCursor.y + 1) / CURSOR_HEIGHT),
+    };
+  }
+
+  function getLines() {
+    return editorText.text.split("\n");
   }
 };
