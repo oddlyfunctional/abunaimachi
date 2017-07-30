@@ -87,7 +87,7 @@ window.onload = function() {
   var walls = [];
   var gridBackground;
 
-  var initialEnergy = 99;
+  var initialEnergy = 3;
   var energy = initialEnergy;
   var energyLabel;
 
@@ -110,6 +110,8 @@ window.onload = function() {
     game.load.image('editor', 'images/editor.png');
     game.load.image('cursor', 'images/cursor.png');
     game.load.image('play-button', 'images/play-button.png');
+    game.load.image('alert', 'images/alert.png');
+    game.load.image('alert-button', 'images/alert-button.png');
 
     game.load.audio('drop_stone', 'sounds/drop_stone.wav');
     game.load.audio('pick_stone', 'sounds/pick_stone.wav');
@@ -214,7 +216,6 @@ window.onload = function() {
     robot.angle = 0;
     setPosition(robot, initialRobotPosition.row, initialRobotPosition.column);
     energy = initialEnergy;
-    setNextMove();
     robot.bringToTop();
   }
 
@@ -276,6 +277,7 @@ window.onload = function() {
     run();
     isPlaying = true;
     reset();
+    setNextMove();
   }
 
   function addPath(row, column) {
@@ -292,6 +294,7 @@ window.onload = function() {
   }
 
   function update() {
+    energyLabel.setText(energy);
     if (!isPlaying) { return; }
 
     switch (moves[currentMove]) {
@@ -377,7 +380,10 @@ window.onload = function() {
     }
 
     if (currentMove + 1 >= moves.length) { return; }
-    if (!hasEnergy()) { return; }
+    if (!hasEnergy()) {
+      createAlert("You've ran out of power.", "Fuck.", reset);
+      return;
+    }
     currentMove += 1;
     energy = energy - 1;
     switch(moves[currentMove]) {
@@ -401,8 +407,6 @@ window.onload = function() {
       default:
         throw new Error("Deu merda! " + moves[currentMove]);
     }
-
-    energyLabel.setText(energy);
   }
 
   function allStonesinBox() {
@@ -647,5 +651,34 @@ window.onload = function() {
 
   function getLines() {
     return editorText.text.split("\n");
+  }
+
+  function createAlert(text, buttonText, callback) {
+    isPlaying = false;
+    var alert = game.add.sprite(0, 0, "alert");
+    alert.inputEnabled = true;
+    alert.input.enableDrag();
+    alert.anchor.set(0.5, 0.5);
+    alert.x = game.world.centerX;
+    alert.y = game.world.centerY;
+
+    var style = { align: 'center', wordWrap: true, wordWrapWidth: alert.width - 20 };
+    var textLabel = game.add.text(0, 0, text, style);
+    textLabel.anchor.set(0.5, 0.5);
+    alert.addChild(textLabel);
+
+    var button = game.add.button(0, 0, 'alert-button', close);
+    button.anchor.set(0.5, 0.5);
+    button.y = 90;
+    alert.addChild(button);
+
+    var buttonLabel = game.add.text(0, 0, buttonText);
+    buttonLabel.anchor.set(0.5, 0.5);
+    button.addChild(buttonLabel);
+
+    function close() {
+      alert.destroy(true);
+      callback();
+    }
   }
 };
