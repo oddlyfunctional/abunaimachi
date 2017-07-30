@@ -5,9 +5,9 @@ window.onload = function() {
 
   var initialGrid = [
     [1,0,1,1,1,1],
-    [1,2,2,3,1,1],
+    [1,2,3,1,1,1],
     [0,1,1,4,1,1],
-    [0,2,1,3,1,1],
+    [0,1,1,1,1,1],
     [0,1,1,1,1,1],
   ];
 
@@ -81,7 +81,7 @@ window.onload = function() {
   var isPlaying = false;
   var initialRobotPosition = { row: 0, column: 0 };
   var stones = [];
-  var boxes = [];
+  var box;
   var batteries = [];
   var paths = [];
   var walls = [];
@@ -133,9 +133,10 @@ window.onload = function() {
 
     batteries.forEach(destroy);
     stones.forEach(destroy);
-    boxes.forEach(destroy);
+    // boxes.forEach(destroy);
     paths.forEach(destroy);
     walls.forEach(destroy);
+    // box.destroy();
 
     batteries = [];
     stones = [];
@@ -170,10 +171,10 @@ window.onload = function() {
             gridBackground.addChild(stone);
             break;
           case BOX:
-            var box = game.add.sprite(0, 0, 'box');
+            box = game.add.sprite(0, 0, 'box');
             box.anchor.setTo(0.5, 0.5);
             setPosition(box, row, column);
-            boxes.push(box);
+            // boxes.push(box);
 
             var path = addPath(column, row);
             paths.push(path);
@@ -337,6 +338,7 @@ window.onload = function() {
   }
 
   function pickStone() {
+    if (allStonesinBox()) { return alert('Parabens, voce venceu'); }
     if (canMoveForward()) {
       var stone = findSprite(stones);
       var robotCoords = getRobotCoordinates();
@@ -357,11 +359,14 @@ window.onload = function() {
       var stone = robot.removeChildAt(0);
       stone.x = robot.x;
       stone.y = robot.y;
+
+      box.addChild(stone);
       drop_stone.play();
     }
   }
 
   function setNextMove() {
+    if (allStonesinBox()) { return console.log('Parabens, voce venceu!'); }
     switch (getCurrentCell()) {
       case BATTERY:
         pickBattery();
@@ -402,6 +407,15 @@ window.onload = function() {
       default:
         throw new Error("Deu merda! " + moves[currentMove]);
     }
+  }
+
+  function allStonesinBox() {
+    var withoutBox = stones.filter(function(stone) {
+      return stone.parent.key != "box";
+    });
+
+    console.log(withoutBox);
+    return withoutBox.length == 0;
   }
 
   function moveForward() {
