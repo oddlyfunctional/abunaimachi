@@ -30,6 +30,7 @@ window.onload = function() {
     var targetAngle;
     var cellWidth = 55;
     var energy = 5;
+    var battery = [];
 
 
     var game = new Phaser.Game(1100, 825, Phaser.AUTO, '', {
@@ -43,6 +44,7 @@ window.onload = function() {
         game.load.image('logo', 'images/player.png');
         game.load.image('wall', 'images/wall.png');
         game.load.image('path', 'images/path.png');
+        game.load.image('battery', 'images/battery.png');
     }
 
     function create () {
@@ -87,9 +89,22 @@ window.onload = function() {
       logo.angle = 0;
       setPlayerInitialPosition(5, 5);
 
+      battery = game.add.sprite(0, 0, 'battery');
+      battery.anchor.setTo(0.5, 0.5);
+      logo.angle = 0;
+      setBatteryInitialPosition(3, 3);
+
       cursors = game.input.keyboard.createCursorKeys();
 
       setNextMove();
+
+    }
+
+
+    function setBatteryInitialPosition(x, y){
+      battery.x = (55 * x) + 27
+      battery.y = (55 * y) + 27
+
     }
 
     function setPlayerInitialPosition(x, y){
