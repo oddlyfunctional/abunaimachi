@@ -286,6 +286,10 @@ window.onload = function() {
     editorCursor.height = CURSOR_HEIGHT;
     editorBackground.addChild(editorCursor);
 
+    playButton = game.add.button(editorBackground.centerX, editorBackground.height - 20, 'play-button', play);
+    playButton.anchor.set(0.5, 1);
+    editorBackground.addChild(playButton);
+
     game.input.keyboard.addKeyCapture([Phaser.Keyboard.LEFT, Phaser.Keyboard.RIGHT, Phaser.Keyboard.UP, Phaser.Keyboard.DOWN, Phaser.Keyboard.SPACEBAR]);
     game.input.keyboard.onDownCallback = write;
 
@@ -295,8 +299,6 @@ window.onload = function() {
     energyLabel.x = 170
     energyLabel.y = 890;
     gridWindow.addChild(energyLabel);
-
-    playButton = game.add.button(400, 0, 'play-button', play);
 
     taskbar = game.add.sprite(0, game.height, 'taskbar');
     taskbar.anchor.set(0, 1);
