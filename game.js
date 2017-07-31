@@ -4,11 +4,21 @@ window.onload = function() {
   //  Be sure to replace it with an updated version before you start experimenting with adding your own code.
 
   var initialGrid = [
-    [1,0,1,1,1,1],
-    [1,2,3,1,1,1],
-    [0,1,1,4,1,1],
-    [0,1,1,1,1,1],
-    [0,1,1,1,1,1],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+    [0,1,2,4,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+    [0,1,2,1,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+    [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+    [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+    [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+    [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+    [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+    [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+    [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+    [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+    [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+    [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
   ];
 
   var grid;
@@ -32,10 +42,13 @@ window.onload = function() {
   var GRID_BOTTOM = GRID_TOP + GRID_HEIGHT;
   var GRID_RIGHT = GRID_LEFT + GRID_WIDTH;
 
-  var FONT_WIDTH = 20;
+  var EDITOR_WIDTH = 660;
+  var EDITOR_HEIGHT = 830;
+
+  var FONT_WIDTH = 30;
   var FONT_HEIGHT = 20;
-  var CURSOR_WIDTH = 12;
-  var CURSOR_HEIGHT = 26;
+  var CURSOR_WIDTH = 18;
+  var CURSOR_HEIGHT = 38;
   var CHARS_PER_LINE = 23;
   var LINES = 24;
 
@@ -79,15 +92,16 @@ window.onload = function() {
   var targetPosition = {};
   var targetAngle;
   var isPlaying = false;
-  var initialRobotPosition = { row: 0, column: 0 };
+  var initialRobotPosition = { row: 1, column: 1 };
   var stones = [];
   var box;
   var batteries = [];
   var paths = [];
   var walls = [];
   var gridBackground;
+  var taskbar;
 
-  var initialEnergy = 3;
+  var initialEnergy = 7;
   var energy = initialEnergy;
   var energyLabel;
 
@@ -101,10 +115,10 @@ window.onload = function() {
   window.game = game;
 
   function preload () {
-    game.load.image('robot', 'images/player.png');
+    game.load.image('robot', 'images/robot.png');
     game.load.image('wall', 'images/wall.png');
     game.load.image('path', 'images/path.png');
-    game.load.image('stone', 'images/pedra.png');
+    game.load.image('stone', 'images/stone.png');
     game.load.image('box', 'images/box.png');
     game.load.image('battery', 'images/battery.png');
     game.load.image('editor', 'images/editor.png');
@@ -112,6 +126,9 @@ window.onload = function() {
     game.load.image('play-button', 'images/play-button.png');
     game.load.image('alert', 'images/alert.png');
     game.load.image('alert-button', 'images/alert-button.png');
+    game.load.image('grid-window', 'images/grid-window.png');
+    game.load.image('energy', 'images/energy.png');
+    game.load.image('taskbar', 'images/taskbar.png');
 
     game.load.audio('drop_stone', 'sounds/drop_stone.wav');
     game.load.audio('pick_stone', 'sounds/pick_stone.wav');
@@ -216,14 +233,21 @@ window.onload = function() {
     robot.angle = 0;
     setPosition(robot, initialRobotPosition.row, initialRobotPosition.column);
     energy = initialEnergy;
+    setEnergyLabel();
     robot.bringToTop();
+    taskbar.bringToTop();
   }
 
-  function create () {
+  function create() {
+    game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
+
+    var gridWindow = game.add.sprite(GRID_LEFT, GRID_TOP, 'grid-window');
+    gridWindow.inputEnabled = true;
+    gridWindow.input.enableDrag();
+
     var bg = game.add.bitmapData(GRID_WIDTH, GRID_HEIGHT);
-    gridBackground = game.add.sprite(GRID_LEFT, GRID_TOP, bg);
-    gridBackground.inputEnabled = true;
-    gridBackground.input.enableDrag();
+    gridBackground = game.add.sprite(12, 52, bg);
+    gridWindow.addChild(gridBackground);
 
     robot = game.add.sprite(0, 0, 'robot');
     window.robot = robot;
@@ -233,10 +257,14 @@ window.onload = function() {
     editor.inputEnabled = true;
     editor.input.enableDrag();
 
-    editorText = game.add.text(0, 0, testScript);
-    editorText.font = "'Courier New', Courier, monospace";
+    bg = game.add.bitmapData(EDITOR_WIDTH, EDITOR_HEIGHT);
+    var editorBackground = game.add.sprite(25, 65, bg);
+    editor.addChild(editorBackground);
+
+    editorText = game.add.text(0, 0, testScript, { font: 'editor', });
+    editorText.addColor("#c5ff00", 0);
     editorText.fontSize = FONT_WIDTH;
-    editor.addChild(editorText);
+    editorBackground.addChild(editorText);
 
     drop_stone = game.add.audio('drop_stone');
     drop_stone.allowMultiple = true;
@@ -258,17 +286,40 @@ window.onload = function() {
     editorCursor = game.add.sprite(0, 0, 'cursor');
     editorCursor.width = CURSOR_WIDTH;
     editorCursor.height = CURSOR_HEIGHT;
-    editor.addChild(editorCursor);
+    editorBackground.addChild(editorCursor);
+
+    playButton = game.add.button(editorBackground.centerX, editorBackground.height - 20, 'play-button', play);
+    playButton.anchor.set(0.5, 1);
+    editorBackground.addChild(playButton);
 
     game.input.keyboard.addKeyCapture([Phaser.Keyboard.LEFT, Phaser.Keyboard.RIGHT, Phaser.Keyboard.UP, Phaser.Keyboard.DOWN, Phaser.Keyboard.SPACEBAR]);
     game.input.keyboard.onDownCallback = write;
 
-    game.stage.backgroundColor = 0xcccccc;
-    energyLabel = game.add.text(400, 0, energy);
+    game.stage.backgroundColor = 0xed2d75;
 
-    playButton = game.add.button(400, 0, 'play-button', play);
+    energyLabel = game.add.group()
+    energyLabel.x = 170
+    energyLabel.y = 890;
+    gridWindow.addChild(energyLabel);
+
+    taskbar = game.add.sprite(0, game.height, 'taskbar');
+    taskbar.anchor.set(0, 1);
 
     reset();
+
+    setTimeout(function() {
+      editorText.text = editorText.text + " ";
+    }, 0);
+  }
+
+  function setEnergyLabel() {
+    while (energyLabel.children.length > 0) {
+      energyLabel.children[0].destroy();
+    }
+
+    for(var i = 0; i < energy; i++) {
+      energyLabel.addChild(game.add.sprite(35 * i, 0, 'energy'));
+    }
   }
 
   function play() {
@@ -294,7 +345,6 @@ window.onload = function() {
   }
 
   function update() {
-    energyLabel.setText(energy);
     if (!isPlaying) { return; }
 
     switch (moves[currentMove]) {
@@ -338,7 +388,6 @@ window.onload = function() {
   }
 
   function pickStone() {
-    if (allStonesinBox()) { return alert('Parabens, voce venceu'); }
     if (canMoveForward()) {
       var stone = findSprite(stones);
       var robotCoords = getRobotCoordinates();
@@ -366,7 +415,6 @@ window.onload = function() {
   }
 
   function setNextMove() {
-    if (allStonesinBox()) { return console.log('Parabens, voce venceu!'); }
     switch (getCurrentCell()) {
       case BATTERY:
         pickBattery();
@@ -379,6 +427,11 @@ window.onload = function() {
         break;
     }
 
+    if (allStonesinBox()) {
+      createAlert("Congratz, you saved the world!", "Weeee!!", reset);
+      return;
+    }
+
     if (currentMove + 1 >= moves.length) { return; }
     if (!hasEnergy()) {
       createAlert("You've ran out of power.", "Fuck.", reset);
@@ -386,6 +439,7 @@ window.onload = function() {
     }
     currentMove += 1;
     energy = energy - 1;
+    setEnergyLabel();
     switch(moves[currentMove]) {
       case "forward":
         if (canMoveForward()) {
@@ -447,6 +501,8 @@ window.onload = function() {
     battery.destroy();
     batteries.splice(batteries.indexOf(battery), 1);
     grid[robotCoords.y][robotCoords.x] = PATH;
+
+    setEnergyLabel();
   }
 
   function findSprite(sprites) {
@@ -563,7 +619,7 @@ window.onload = function() {
     var isLeft = keyCode == 37;
     var isPrintable =
       (keyCode > 47 && keyCode < 58)   || // number keys
-      keyCode == 32 || keyCode == 13   || // spacebar & return key(s) (if you want to allow carriage returns)
+      (keyCode == 32)                  || // spacebar & return key(s) (if you want to allow carriage returns)
       (keyCode > 64 && keyCode < 91)   || // letter keys
       (keyCode > 95 && keyCode < 112)  || // numpad keys
       (keyCode > 185 && keyCode < 193) || // ;=,-./` (in order)
