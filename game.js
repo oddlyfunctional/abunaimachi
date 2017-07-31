@@ -3,25 +3,45 @@ window.onload = function() {
   //  Although it will work fine with this tutorial, it's almost certainly not the most current version.
   //  Be sure to replace it with an updated version before you start experimenting with adding your own code.
 
-  var initialGrid = [
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
-    [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
-    [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
-    [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
-    [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
-    [0,1,1,1,1,1,1,1,4,1,1,1,1,1,1,1,1,1,1,0],
-    [0,1,1,1,1,1,6,1,1,0,2,1,3,1,1,1,1,1,1,0],
-    [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
-    [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
-    [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
-    [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
-    [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
-    [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-  ];
+  var grids = [
+		[
+			[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+			[0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+			[0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+			[0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+			[0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+			[0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+			[0,1,1,1,1,1,1,1,4,1,1,1,1,1,1,1,1,1,1,0],
+			[0,1,1,1,1,1,6,2,3,1,1,1,1,1,1,1,1,1,1,0],
+			[0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+			[0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+			[0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+			[0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+			[0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+			[0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+			[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+		],
+		[
+			[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+			[0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+			[0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+			[0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+			[0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+			[0,1,1,1,1,1,1,6,1,1,1,1,1,1,1,1,1,1,1,0],
+			[0,1,1,1,1,1,1,1,4,1,1,1,1,1,1,1,1,1,1,0],
+			[0,1,1,1,1,1,1,1,1,0,2,1,3,1,1,1,1,1,1,0],
+			[0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+			[0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+			[0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+			[0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+			[0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+			[0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+			[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+		],
+	];
 
   var grid;
+	var currentGrid = 0;
 
   var CELL_WIDTH = 55;
   var WALL = 0;
@@ -39,10 +59,12 @@ window.onload = function() {
   var FACE_DOWN = -180;
   var FACE_LEFT = -90;
 
+	var GRID_ROWS = 15;
+	var GRID_COLUMNS = 20;
   var GRID_LEFT = 700;
   var GRID_TOP = 200;
-  var GRID_WIDTH = initialGrid[0].length * CELL_WIDTH;
-  var GRID_HEIGHT = initialGrid.length * CELL_WIDTH;
+  var GRID_WIDTH = GRID_COLUMNS * CELL_WIDTH;
+  var GRID_HEIGHT = GRID_ROWS * CELL_WIDTH;
   var GRID_BOTTOM = GRID_TOP + GRID_HEIGHT;
   var GRID_RIGHT = GRID_LEFT + GRID_WIDTH;
 
@@ -150,7 +172,7 @@ window.onload = function() {
   }
 
   function reset() {
-    grid = JSON.parse(JSON.stringify(initialGrid));
+    grid = JSON.parse(JSON.stringify(grids[currentGrid]));
 
     while (robot.children.length > 0) {
       robot.removeChildAt(0);
@@ -504,8 +526,15 @@ window.onload = function() {
         break;
     }
 
-    if (allStonesinBox()) {
-      createAlert("Congratz, you saved the world!", "Weeee!!", reset);
+    if (hasWon()) {
+      createAlert("Congratz, you saved the world!", "Weeee!!", function() {
+        currentGrid++;
+        if (currentGrid < grids.length) {
+          reset();
+        } else {
+          createAlert("There's nothing more to do now.", "Okay...");
+        }
+      });
       return;
     }
 
@@ -540,7 +569,7 @@ window.onload = function() {
     }
   }
 
-  function allStonesinBox() {
+  function hasWon() {
     var withoutBox = stones.filter(function(stone) {
       return stone.parent.key != "box";
     });
