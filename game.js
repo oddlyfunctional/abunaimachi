@@ -239,6 +239,8 @@ window.onload = function() {
   }
 
   function create() {
+    game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
+
     var gridWindow = game.add.sprite(GRID_LEFT, GRID_TOP, 'grid-window');
     gridWindow.inputEnabled = true;
     gridWindow.input.enableDrag();
