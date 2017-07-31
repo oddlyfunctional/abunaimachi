@@ -42,10 +42,13 @@ window.onload = function() {
   var GRID_BOTTOM = GRID_TOP + GRID_HEIGHT;
   var GRID_RIGHT = GRID_LEFT + GRID_WIDTH;
 
-  var FONT_WIDTH = 20;
+  var EDITOR_WIDTH = 660;
+  var EDITOR_HEIGHT = 830;
+
+  var FONT_WIDTH = 30;
   var FONT_HEIGHT = 20;
-  var CURSOR_WIDTH = 12;
-  var CURSOR_HEIGHT = 26;
+  var CURSOR_WIDTH = 18;
+  var CURSOR_HEIGHT = 38;
   var CHARS_PER_LINE = 23;
   var LINES = 24;
 
@@ -235,7 +238,7 @@ window.onload = function() {
     taskbar.bringToTop();
   }
 
-  function create () {
+  function create() {
     var gridWindow = game.add.sprite(GRID_LEFT, GRID_TOP, 'grid-window');
     gridWindow.inputEnabled = true;
     gridWindow.input.enableDrag();
@@ -252,10 +255,14 @@ window.onload = function() {
     editor.inputEnabled = true;
     editor.input.enableDrag();
 
-    editorText = game.add.text(0, 0, testScript);
-    editorText.font = "'Courier New', Courier, monospace";
+    bg = game.add.bitmapData(EDITOR_WIDTH, EDITOR_HEIGHT);
+    var editorBackground = game.add.sprite(25, 65, bg);
+    editor.addChild(editorBackground);
+
+    editorText = game.add.text(0, 0, testScript, { font: 'editor', });
+    editorText.addColor("#c5ff00", 0);
     editorText.fontSize = FONT_WIDTH;
-    editor.addChild(editorText);
+    editorBackground.addChild(editorText);
 
     drop_stone = game.add.audio('drop_stone');
     drop_stone.allowMultiple = true;
@@ -277,7 +284,7 @@ window.onload = function() {
     editorCursor = game.add.sprite(0, 0, 'cursor');
     editorCursor.width = CURSOR_WIDTH;
     editorCursor.height = CURSOR_HEIGHT;
-    editor.addChild(editorCursor);
+    editorBackground.addChild(editorCursor);
 
     game.input.keyboard.addKeyCapture([Phaser.Keyboard.LEFT, Phaser.Keyboard.RIGHT, Phaser.Keyboard.UP, Phaser.Keyboard.DOWN, Phaser.Keyboard.SPACEBAR]);
     game.input.keyboard.onDownCallback = write;
@@ -295,6 +302,10 @@ window.onload = function() {
     taskbar.anchor.set(0, 1);
 
     reset();
+
+    setTimeout(function() {
+      editorText.text = editorText.text + " ";
+    }, 0);
   }
 
   function setEnergyLabel() {
@@ -604,7 +615,7 @@ window.onload = function() {
     var isLeft = keyCode == 37;
     var isPrintable =
       (keyCode > 47 && keyCode < 58)   || // number keys
-      keyCode == 32 || keyCode == 13   || // spacebar & return key(s) (if you want to allow carriage returns)
+      (keyCode == 32)                  || // spacebar & return key(s) (if you want to allow carriage returns)
       (keyCode > 64 && keyCode < 91)   || // letter keys
       (keyCode > 95 && keyCode < 112)  || // numpad keys
       (keyCode > 185 && keyCode < 193) || // ;=,-./` (in order)

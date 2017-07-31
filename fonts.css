@@ -1,0 +1,15 @@
+@font-face {
+  font-family: 'interface';
+  src: url('fonts/interface.woff2') format('woff2'),
+       url('fonts/interface.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'editor';
+  src: url('fonts/editor.woff2') format('woff2'),
+       url('fonts/editor.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
