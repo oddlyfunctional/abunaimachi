@@ -242,8 +242,7 @@ window.onload = function() {
     game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
 
     var gridWindow = game.add.sprite(GRID_LEFT, GRID_TOP, 'grid-window');
-    gridWindow.inputEnabled = true;
-    gridWindow.input.enableDrag();
+    enableDrag(gridWindow);
 
     var bg = game.add.bitmapData(GRID_WIDTH, GRID_HEIGHT);
     gridBackground = game.add.sprite(12, 52, bg);
@@ -254,8 +253,7 @@ window.onload = function() {
     robot.anchor.setTo(0.5, 0.5);
 
     editor = game.add.sprite(300, 50, 'editor');
-    editor.inputEnabled = true;
-    editor.input.enableDrag();
+    enableDrag(editor);
 
     bg = game.add.bitmapData(EDITOR_WIDTH, EDITOR_HEIGHT);
     var editorBackground = game.add.sprite(25, 65, bg);
@@ -709,11 +707,21 @@ window.onload = function() {
     return editorText.text.split("\n");
   }
 
+  function enableDrag(sprite) {
+    sprite.inputEnabled = true;
+    sprite.input.enableDrag();
+    sprite.events.onDragStart.add(setFocus, this);
+  }
+
+  function setFocus(sprite) {
+    sprite.bringToTop();
+    taskbar.bringToTop();
+  }
+
   function createAlert(text, buttonText, callback) {
     isPlaying = false;
     var alert = game.add.sprite(0, 0, "alert");
-    alert.inputEnabled = true;
-    alert.input.enableDrag();
+    enableDrag(alert);
     alert.anchor.set(0.5, 0.5);
     alert.x = game.world.centerX;
     alert.y = game.world.centerY;
