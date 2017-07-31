@@ -6,12 +6,12 @@ window.onload = function() {
   var initialGrid = [
     [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
     [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
-    [0,1,2,4,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
-    [0,1,2,1,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
     [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
     [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
     [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
     [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+    [0,1,1,1,1,1,1,1,4,1,1,1,1,1,1,1,1,1,1,0],
+    [0,1,1,1,1,1,6,1,4,0,2,1,3,1,1,1,1,1,1,0],
     [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
     [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
     [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
@@ -29,6 +29,10 @@ window.onload = function() {
   var STONE = 2;
   var BOX = 3;
   var BATTERY = 4;
+  var ROBOT_UP = 5;
+  var ROBOT_RIGHT = 6;
+  var ROBOT_DOWN = 7;
+  var ROBOT_LEFT = 8;
 
   var FACE_UP = 0;
   var FACE_RIGHT = 90;
@@ -105,12 +109,32 @@ window.onload = function() {
   var energy = initialEnergy;
   var energyLabel;
 
-  var game = new Phaser.Game(1920, 1080, Phaser.AUTO, '', {
+  var game = new Phaser.Game(1920, 1080, Phaser.AUTO, '');
+
+  var LEVEL_1 = {
     preload: preload,
     create: create,
     update: update,
     render: render,
-  });
+  };
+
+  var SPLASH_SCREEN = {
+    preload: function() {
+      game.load.image('splash', 'images/splash.png');
+    },
+
+    create: function() {
+      game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
+      game.add.sprite(0, 0, 'splash');
+      game.input.keyboard.onDownCallback = function() {
+        game.state.start("Level1");
+      };
+    }
+  };
+
+  game.state.add("Level1", LEVEL_1);
+  game.state.add("SplashScreen", SPLASH_SCREEN);
+  game.state.start("SplashScreen");
 
   window.game = game;
 
@@ -209,6 +233,34 @@ window.onload = function() {
             gridBackground.addChild(path);
             gridBackground.addChild(battery);
             break;
+          case ROBOT_UP:
+            setPosition(robot, row, column);
+            robot.angle = FACE_UP;
+            var path = addPath(column, row);
+            paths.push(path);
+            gridBackground.addChild(path);
+            break;
+          case ROBOT_RIGHT:
+            setPosition(robot, row, column);
+            robot.angle = FACE_RIGHT;
+            var path = addPath(column, row);
+            paths.push(path);
+            gridBackground.addChild(path);
+            break;
+          case ROBOT_DOWN:
+            setPosition(robot, row, column);
+            robot.angle = FACE_DOWN;
+            var path = addPath(column, row);
+            paths.push(path);
+            gridBackground.addChild(path);
+            break;
+          case ROBOT_LEFT:
+            setPosition(robot, row, column);
+            robot.angle = FACE_LEFT;
+            var path = addPath(column, row);
+            paths.push(path);
+            gridBackground.addChild(path);
+            break;
         }
       });
     });
@@ -230,8 +282,6 @@ window.onload = function() {
     });
 
     currentMove = -1;
-    robot.angle = 0;
-    setPosition(robot, initialRobotPosition.row, initialRobotPosition.column);
     energy = initialEnergy;
     setEnergyLabel();
     robot.bringToTop();
