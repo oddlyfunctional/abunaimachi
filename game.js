@@ -11,7 +11,7 @@ window.onload = function() {
     [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
     [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
     [0,1,1,1,1,1,1,1,4,1,1,1,1,1,1,1,1,1,1,0],
-    [0,1,1,1,1,1,6,1,4,0,2,1,3,1,1,1,1,1,1,0],
+    [0,1,1,1,1,1,6,1,1,0,2,1,3,1,1,1,1,1,1,0],
     [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
     [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
     [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
@@ -72,27 +72,11 @@ window.onload = function() {
   var speed = 1;
   var testScript = "" +
     "function run() {\n" +
-    "  turnRight();\n" +
-    "  turnRight();\n" +
-    "  forward();\n" +
-    "  turnLeft();\n" +
-    "  forward();\n" +
-    "  forward();\n" +
-    "  forward();\n" +
-    "  turnRight();\n" +
-    "  forward();\n" +
-    "  turnRight();\n" +
-    "  forward();\n" +
-    "  forward();\n" +
-    "  turnLeft();\n" +
-    "  forward();\n" +
-    "  turnLeft();\n" +
-    "  forward();\n" +
-    "  forward();\n" +
     "}";
 
   var moves = [];
-  var currentMove = -1;
+  var currentMoveIndex = -1;
+  var currentMove;
   var targetPosition = {};
   var targetAngle;
   var isPlaying = false;
@@ -281,7 +265,7 @@ window.onload = function() {
       battery.bringToTop();
     });
 
-    currentMove = -1;
+    currentMoveIndex = -1;
     energy = initialEnergy;
     setEnergyLabel();
     robot.bringToTop();
@@ -399,43 +383,81 @@ window.onload = function() {
   function update() {
     if (!isPlaying) { return; }
 
-    switch (moves[currentMove]) {
+    switch (currentMove) {
       case "forward":
-        if (isMovingForward()) {
-        switch(Math.round(robot.angle)) {
-          case FACE_UP:
-            robot.y -= speed;
-          break;
-          case FACE_RIGHT:
-            robot.x += speed;
-          break;
-          case FACE_DOWN:
-            robot.y += speed;
-          break;
-          case FACE_LEFT:
-            robot.x -= speed;
-          break;
-          default:
-            throw new Error("Unrecognized angle: " + robot.angle);
+        if (isMoving()) {
+          updateForward(speed);
+        } else {
+          setNextMove();
         }
-      } else if (currentMove < moves.length) {
-        setNextMove();
-      }
-      break;
+        break;
       case "turnRight":
         if (isTurning()) {
           robot.angle = Math.round(robot.angle + speed);
         } else {
           setNextMove();
         }
-      break;
+        break;
       case "turnLeft":
         if (isTurning()) {
-        robot.angle = Math.round(robot.angle - speed);
-      } else {
-        setNextMove();
-      }
-      break;
+          robot.angle = Math.round(robot.angle - speed);
+        } else {
+          setNextMove();
+        }
+        break;
+      case "bouncingForward":
+        if (isMoving()) {
+          updateBouncingForward();
+        } else {
+          startBouncingBack();
+        }
+        break;
+      case "bouncingBack":
+        if (isMoving()) {
+          updateBouncingBack();
+        } else {
+          setNextMove();
+        }
+        break;
+    }
+  }
+
+  function startBouncingForward() {
+    currentMove = "bouncingForward";
+    setTarget(10);
+  }
+
+  function startBouncingBack() {
+    hit_wall.play();
+    currentMove = "bouncingBack";
+    setTarget(-10);
+  }
+
+  function updateBouncingForward() {
+    updateForward(speed);
+  }
+
+  function updateBouncingBack() {
+    updateForward(-speed);
+  }
+
+  function updateForward(speed) {
+    switch(Math.round(robot.angle)) {
+      case FACE_UP:
+        robot.y -= speed;
+        break;
+      case FACE_RIGHT:
+        robot.x += speed;
+        console.log(robot.x, speed);
+        break;
+      case FACE_DOWN:
+        robot.y += speed;
+        break;
+      case FACE_LEFT:
+        robot.x -= speed;
+        break;
+      default:
+        throw new Error("Unrecognized angle: " + robot.angle);
     }
   }
 
@@ -450,9 +472,12 @@ window.onload = function() {
       grid[robotCoords.y][robotCoords.x] = PATH;
       pick_stone.play();
     } else {
-      hit_wall.play();
-      setNextMove();
+      hitWall();
     }
+  }
+
+  function hitWall() {
+    startBouncingForward();
   }
 
   function dropStone() {
@@ -484,22 +509,22 @@ window.onload = function() {
       return;
     }
 
-    if (currentMove + 1 >= moves.length) { return; }
+    if (currentMoveIndex + 1 >= moves.length) { return; }
     if (!hasEnergy()) {
       createAlert("You've ran out of power.", "Fuck.", reset);
       return;
     }
-    currentMove += 1;
+    currentMoveIndex += 1;
+    currentMove = moves[currentMoveIndex];
     energy = energy - 1;
     setEnergyLabel();
-    switch(moves[currentMove]) {
+    switch(currentMove) {
       case "forward":
         if (canMoveForward()) {
           step.play();
-          moveForward();
+          startForward();
         } else {
-          hit_wall.play();
-          setNextMove();
+          hitWall();
         }
         break;
       case "turnRight":
@@ -511,7 +536,7 @@ window.onload = function() {
         turn(-90);
         break;
       default:
-        throw new Error("Deu merda! " + moves[currentMove]);
+        throw new Error("Deu merda! " + currentMove);
     }
   }
 
@@ -520,25 +545,28 @@ window.onload = function() {
       return stone.parent.key != "box";
     });
 
-    console.log(withoutBox);
     return withoutBox.length == 0;
   }
 
-  function moveForward() {
+  function startForward() {
+    setTarget(CELL_WIDTH);
+  }
+
+  function setTarget(offset) {
     targetPosition = { x: robot.x, y: robot.y };
 
     switch(Math.round(robot.angle)) {
       case FACE_UP:
-        targetPosition.y -= CELL_WIDTH;
+        targetPosition.y -= offset;
       break;
       case FACE_RIGHT:
-        targetPosition.x += CELL_WIDTH;
+        targetPosition.x += offset;
       break;
       case FACE_DOWN:
-        targetPosition.y += CELL_WIDTH;
+        targetPosition.y += offset;
       break;
       case FACE_LEFT:
-        targetPosition.x -= CELL_WIDTH;
+        targetPosition.x -= offset;
       break;
       default:
         throw new Error("Unrecognized angle: " + robot.angle);
@@ -579,7 +607,7 @@ window.onload = function() {
   function render() {
   }
 
-  function isMovingForward() {
+  function isMoving() {
     return robot.y != targetPosition.y || robot.x != targetPosition.x;
   }
 
