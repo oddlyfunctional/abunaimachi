@@ -321,12 +321,16 @@ window.onload = function() {
   }
 
   function play() {
-    moves = [];
-    eval(editorText.text);
-    run();
-    isPlaying = true;
-    reset();
-    setNextMove();
+    try {
+      moves = [];
+      eval(editorText.text);
+      run();
+      isPlaying = true;
+      reset();
+      setNextMove();
+    } catch(error) {
+      createAlert("Script error: " + error.message, "Got it");
+    }
   }
 
   function addPath(row, column) {
@@ -726,14 +730,14 @@ window.onload = function() {
     alert.x = game.world.centerX;
     alert.y = game.world.centerY;
 
-    var style = { align: 'center', wordWrap: true, wordWrapWidth: alert.width - 20 };
+    var style = { align: 'center', wordWrap: true, wordWrapWidth: alert.width - 30 };
     var textLabel = game.add.text(0, 0, text, style);
     textLabel.anchor.set(0.5, 0.5);
     alert.addChild(textLabel);
 
     var button = game.add.button(0, 0, 'alert-button', close);
     button.anchor.set(0.5, 0.5);
-    button.y = 90;
+    button.y = 80;
     alert.addChild(button);
 
     var buttonLabel = game.add.text(0, 0, buttonText);
@@ -742,7 +746,7 @@ window.onload = function() {
 
     function close() {
       alert.destroy(true);
-      callback();
+      callback && callback();
     }
   }
 };
