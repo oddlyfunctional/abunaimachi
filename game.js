@@ -80,11 +80,12 @@ window.onload = function() {
 
   var ENERGY_RELOAD = 5;
 
-  var drop_stone;
-  var pick_stone;
-  var hit_wall;
-  var step;
-  var rotate;
+  var dropStoneSound;
+  var pickStoneSound;
+  var hitWallSound;
+  var stepSound;
+  var rotateSound;
+  var pickBatterySound;
 
   var editor;
   var editorText;
@@ -160,11 +161,12 @@ window.onload = function() {
     game.load.image('energy', 'images/energy.png');
     game.load.image('taskbar', 'images/taskbar.png');
 
-    game.load.audio('drop_stone', 'sounds/drop_stone.wav');
-    game.load.audio('pick_stone', 'sounds/pick_stone.wav');
-    game.load.audio('hit_wall', 'sounds/hit_wall.wav');
-    game.load.audio('step', 'sounds/step.wav');
-    game.load.audio('rotate', 'sounds/rotate.wav');
+    game.load.audio('dropStoneSound', 'sounds/drop_stone.wav');
+    game.load.audio('pickStoneSound', 'sounds/pick_stone.wav');
+    game.load.audio('hitWallSound', 'sounds/hit_wall.wav');
+    game.load.audio('stepSound', 'sounds/step.wav');
+    game.load.audio('rotateSound', 'sounds/rotate.wav');
+    game.load.audio('pickBatterySound', 'sounds/pick_battery.wav');
   }
 
   function destroy(sprite) {
@@ -320,22 +322,15 @@ window.onload = function() {
     editorText.fontSize = FONT_WIDTH;
     editorBackground.addChild(editorText);
 
-    drop_stone = game.add.audio('drop_stone');
-    drop_stone.allowMultiple = true;
-
-    pick_stone = game.add.audio('pick_stone');
-    pick_stone.allowMultiple = true;
-
-    hit_wall = game.add.audio('hit_wall');
-    hit_wall.allowMultiple = true;
-
-    step = game.add.audio('step');
-    step.allowMultiple = true;
-
-    rotate = game.add.audio('rotate');
-    rotate.allowMultiple = true;
-    rotate.addMarker('turn', 0.4, 1.0);
-    rotate.addMarker('step', 0, 0.3);
+    dropStoneSound = game.add.audio('dropStoneSound');
+    pickStoneSound = game.add.audio('pickStoneSound');
+    hitWallSound = game.add.audio('hitWallSound');
+    stepSound = game.add.audio('stepSound');
+    stepSound.volume = 0.4;
+    rotateSound = game.add.audio('rotateSound');
+    rotateSound.volume = 0.4;
+    pickBatterySound = game.add.audio('pickBatterySound');
+    window.stepSound = stepSound;
 
     editorCursor = game.add.sprite(0, 0, 'cursor');
     editorCursor.width = CURSOR_WIDTH;
@@ -450,7 +445,8 @@ window.onload = function() {
   }
 
   function startBouncingBack() {
-    hit_wall.play();
+    stepSound.stop();
+    hitWallSound.play();
     currentMove = "bouncingBack";
     setTarget(-10);
   }
@@ -492,7 +488,7 @@ window.onload = function() {
       stone.x = 0;
       stone.y = 0;
       grid[robotCoords.y][robotCoords.x] = PATH;
-      pick_stone.play();
+      pickStoneSound.play();
     } else {
       hitWall();
     }
@@ -509,11 +505,13 @@ window.onload = function() {
       stone.y = robot.y;
 
       box.addChild(stone);
-      drop_stone.play();
+      dropStoneSound.play();
     }
   }
 
   function setNextMove() {
+    [stepSound, rotateSound, hitWallSound, dropStoneSound, dropStoneSound].forEach(function(sound) { sound.stop(); });
+
     switch (getCurrentCell()) {
       case BATTERY:
         pickBattery();
@@ -550,18 +548,18 @@ window.onload = function() {
     switch(currentMove) {
       case "forward":
         if (canMoveForward()) {
-          step.play();
+          stepSound.play();
           startForward();
         } else {
           hitWall();
         }
         break;
       case "turnRight":
-        rotate.play('turn');
+        rotateSound.play();
         turn(90);
         break;
       case "turnLeft":
-        rotate.play('turn');
+        rotateSound.play();
         turn(-90);
         break;
       default:
@@ -603,6 +601,7 @@ window.onload = function() {
   }
 
   function pickBattery() {
+    pickBatterySound.play();
     energy += ENERGY_RELOAD;
     var battery = findSprite(batteries);
     var robotCoords = getRobotCoordinates();
