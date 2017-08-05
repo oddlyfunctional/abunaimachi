@@ -86,6 +86,7 @@ window.onload = function() {
   var stepSound;
   var rotateSound;
   var pickBatterySound;
+  var bgMusic;
 
   var editor;
   var editorText;
@@ -167,6 +168,7 @@ window.onload = function() {
     game.load.audio('stepSound', 'sounds/step.wav');
     game.load.audio('rotateSound', 'sounds/rotate.wav');
     game.load.audio('pickBatterySound', 'sounds/pick_battery.wav');
+    game.load.audio('bgMusic', 'sounds/bgMusic.m4a');
   }
 
   function destroy(sprite) {
@@ -174,6 +176,8 @@ window.onload = function() {
   }
 
   function reset() {
+    isPlaying = false;
+    bgMusic.play();
     grid = JSON.parse(JSON.stringify(grids[currentGrid]));
 
     while (robot.children.length > 0) {
@@ -297,6 +301,9 @@ window.onload = function() {
   }
 
   function create() {
+    bgMusic = game.add.audio('bgMusic');
+    bgMusic.loop = true;
+    bgMusic.play();
     game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
 
     var gridWindow = game.add.sprite(GRID_LEFT, GRID_TOP, 'grid-window');
@@ -323,14 +330,17 @@ window.onload = function() {
     editorBackground.addChild(editorText);
 
     dropStoneSound = game.add.audio('dropStoneSound');
+    dropStoneSound.volume = 0.5;
     pickStoneSound = game.add.audio('pickStoneSound');
+    pickStoneSound.volume = 0.5;
     hitWallSound = game.add.audio('hitWallSound');
+    hitWallSound.volume = 0.5;
     stepSound = game.add.audio('stepSound');
-    stepSound.volume = 0.4;
+    stepSound.volume = 0.2;
     rotateSound = game.add.audio('rotateSound');
-    rotateSound.volume = 0.4;
+    rotateSound.volume = 0.2;
     pickBatterySound = game.add.audio('pickBatterySound');
-    window.stepSound = stepSound;
+    pickBatterySound.volume = 0.5;
 
     editorCursor = game.add.sprite(0, 0, 'cursor');
     editorCursor.width = CURSOR_WIDTH;
@@ -376,10 +386,12 @@ window.onload = function() {
       moves = [];
       eval(editorText.text);
       run();
-      isPlaying = true;
       reset();
+      isPlaying = true;
+      bgMusic.pause();
       setNextMove();
     } catch(error) {
+      bgMusic.play();
       createAlert("Script error: " + error.message, "Got it");
     }
   }
@@ -536,7 +548,11 @@ window.onload = function() {
       return;
     }
 
-    if (currentMoveIndex + 1 >= moves.length) { return; }
+    if (currentMoveIndex + 1 >= moves.length) {
+      reset();
+      return;
+    }
+
     if (!hasEnergy()) {
       createAlert("You've ran out of power.", "Fuck.", reset);
       return;
