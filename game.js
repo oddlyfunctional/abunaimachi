@@ -328,6 +328,7 @@ window.onload = function() {
     var gridWindow = game.add.sprite(GRID_LEFT, GRID_TOP, 'grid-window');
     enableDrag(gridWindow);
     addCloseButton(gridWindow);
+    addMinimizeButton(gridWindow, 150, 1100);
 
     var bg = game.add.bitmapData(GRID_WIDTH, GRID_HEIGHT);
     gridBackground = game.add.sprite(12, 52, bg);
@@ -340,6 +341,7 @@ window.onload = function() {
     editor = game.add.sprite(300, 50, 'editor');
     enableDrag(editor);
     addCloseButton(editor);
+    addMinimizeButton(editor, 50, 1100);
 
     bg = game.add.bitmapData(EDITOR_WIDTH, EDITOR_HEIGHT);
     var editorBackground = game.add.sprite(25, 65, bg);
@@ -930,14 +932,29 @@ window.onload = function() {
     closeButton.x -= closeButton.width;
     window.addChild(closeButton);
     closeButton.inputEnabled = true;
-    closeButton.inputEnabled = true;
     closeButton.input.useHandCursor = true
     closeButton.events.onInputDown.add(function() {
       var tween = game.add.tween(window.scale);
       tween.onComplete.add(function() {
         window.kill();
       });
-      tween.to({ x: 0, y: 0 }, 100, null, true);
+      tween.to({ x: 0, y: 0 }, 150, null, true);
+    });
+  }
+
+  function addMinimizeButton(window, pivotX, pivotY) {
+    var bg = game.add.bitmapData(35, 35);
+    var minimizeButton = game.add.sprite(window.width - 135, 10, bg);
+    window.addChild(minimizeButton);
+    minimizeButton.inputEnabled = true;
+    minimizeButton.input.useHandCursor = true
+    minimizeButton.events.onInputDown.add(function() {
+      var tween = game.add.tween(window.scale);
+      tween.onComplete.add(function() {
+        window.kill();
+      });
+      tween.to({ x: 0, y: 0 }, 150, null, true);
+      game.add.tween(window).to({ x: pivotX, y: pivotY }, 150, null, true);
     });
   }
 };
