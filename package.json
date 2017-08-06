@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/oddlyfunctional/abunaimachi#readme",
   "dependencies": {
+    "fontfaceobserver": "^2.0.13",
     "phaser": "^2.6.2"
   }
 }

@@ -73,10 +73,10 @@ window.onload = function() {
 
   var FONT_WIDTH = 30;
   var FONT_HEIGHT = 20;
-  var CURSOR_WIDTH = 18;
-  var CURSOR_HEIGHT = 38;
-  var CHARS_PER_LINE = 23;
-  var LINES = 24;
+  window.CURSOR_WIDTH = 17.5;
+  window.CURSOR_HEIGHT = 32;
+  window.CHARS_PER_LINE = 35;
+  var LINES = 23;
 
   var ENERGY_RELOAD = 5;
 
@@ -86,10 +86,12 @@ window.onload = function() {
   var stepSound;
   var rotateSound;
   var pickBatterySound;
+  var alertSound;
+  var bgMusic;
 
-  var editor;
-  var editorText;
-  var editorCursor;
+  window.editor;
+  window.editorText;
+  window.editorCursor;
 
   var robot;
   var speed = 1;
@@ -167,6 +169,8 @@ window.onload = function() {
     game.load.audio('stepSound', 'sounds/step.wav');
     game.load.audio('rotateSound', 'sounds/rotate.wav');
     game.load.audio('pickBatterySound', 'sounds/pick_battery.wav');
+    game.load.audio('alertSound', 'sounds/alert.wav');
+    game.load.audio('bgMusic', 'sounds/bgMusic.m4a');
   }
 
   function destroy(sprite) {
@@ -174,6 +178,8 @@ window.onload = function() {
   }
 
   function reset() {
+    isPlaying = false;
+    bgMusic.play();
     grid = JSON.parse(JSON.stringify(grids[currentGrid]));
 
     while (robot.children.length > 0) {
@@ -297,6 +303,16 @@ window.onload = function() {
   }
 
   function create() {
+    Promise.all([
+      new FontFaceObserver('interface').load(),
+      new FontFaceObserver('editor').load(),
+    ]).then(delayedCreate);
+  }
+
+  function delayedCreate() {
+    bgMusic = game.add.audio('bgMusic');
+    bgMusic.loop = true;
+    bgMusic.play();
     game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
 
     var gridWindow = game.add.sprite(GRID_LEFT, GRID_TOP, 'grid-window');
@@ -323,18 +339,25 @@ window.onload = function() {
     editorBackground.addChild(editorText);
 
     dropStoneSound = game.add.audio('dropStoneSound');
+    dropStoneSound.volume = 0.5;
     pickStoneSound = game.add.audio('pickStoneSound');
+    pickStoneSound.volume = 0.5;
     hitWallSound = game.add.audio('hitWallSound');
+    hitWallSound.volume = 0.5;
     stepSound = game.add.audio('stepSound');
-    stepSound.volume = 0.4;
+    stepSound.volume = 0.2;
     rotateSound = game.add.audio('rotateSound');
-    rotateSound.volume = 0.4;
+    rotateSound.volume = 0.2;
     pickBatterySound = game.add.audio('pickBatterySound');
-    window.stepSound = stepSound;
+    pickBatterySound.volume = 0.5;
+    alertSound = game.add.audio('alertSound');
+    alertSound.volume = 0.5;
 
     editorCursor = game.add.sprite(0, 0, 'cursor');
     editorCursor.width = CURSOR_WIDTH;
     editorCursor.height = CURSOR_HEIGHT;
+    editorCursor.alpha = 0.6;
+    editorCursor.anchor.set(0, 0.15);
     editorBackground.addChild(editorCursor);
 
     playButton = game.add.button(editorBackground.centerX, editorBackground.height - 20, 'play-button', play);
@@ -376,10 +399,13 @@ window.onload = function() {
       moves = [];
       eval(editorText.text);
       run();
-      isPlaying = true;
       reset();
+      isPlaying = true;
+      bgMusic.pause();
       setNextMove();
     } catch(error) {
+      alertSound.play();
+      bgMusic.play();
       createAlert("Script error: " + error.message, "Got it");
     }
   }
@@ -536,8 +562,13 @@ window.onload = function() {
       return;
     }
 
-    if (currentMoveIndex + 1 >= moves.length) { return; }
+    if (currentMoveIndex + 1 >= moves.length) {
+      reset();
+      return;
+    }
+
     if (!hasEnergy()) {
+      alertSound.play();
       createAlert("You've ran out of power.", "Fuck.", reset);
       return;
     }
@@ -655,10 +686,6 @@ window.onload = function() {
     moves.push("turnRight");
   }
 
-  function render() {
-    game.debug.bodyInfo(robot);
-  }
-
   function canMoveForward() {
     if ((nextCell() == WALL) || (nextCell() == STONE && hasStone())) {
       return false;
@@ -757,7 +784,10 @@ window.onload = function() {
     var lines = getLines();
     var coords = getCursorCoordinates();
     var line = lines[coords.y];
-    if (line.length >= CHARS_PER_LINE) { return; }
+    if (line.length >= CHARS_PER_LINE || coords.y >= LINES) {
+      alertSound.play();
+      return;
+    }
     line = line.substr(0, coords.x) + char + line.substr(coords.x);
     lines[coords.y] = line;
     editorText.text = lines.join("\n");
