@@ -327,6 +327,7 @@ window.onload = function() {
 
     var gridWindow = game.add.sprite(GRID_LEFT, GRID_TOP, 'grid-window');
     enableDrag(gridWindow);
+    addCloseButton(gridWindow);
 
     var bg = game.add.bitmapData(GRID_WIDTH, GRID_HEIGHT);
     gridBackground = game.add.sprite(12, 52, bg);
@@ -338,6 +339,7 @@ window.onload = function() {
 
     editor = game.add.sprite(300, 50, 'editor');
     enableDrag(editor);
+    addCloseButton(editor);
 
     bg = game.add.bitmapData(EDITOR_WIDTH, EDITOR_HEIGHT);
     var editorBackground = game.add.sprite(25, 65, bg);
@@ -778,6 +780,7 @@ window.onload = function() {
   }
 
   function write(event) {
+    if (!editor.alive) { return; }
     var keyCode = event.keyCode;
 
     var isBackspace = keyCode == 8;
@@ -919,5 +922,22 @@ window.onload = function() {
       alert.destroy(true);
       callback && callback();
     }
+  }
+
+  function addCloseButton(window) {
+    var bg = game.add.bitmapData(35, 35);
+    var closeButton = game.add.sprite(window.width - 10, 10, bg);
+    closeButton.x -= closeButton.width;
+    window.addChild(closeButton);
+    closeButton.inputEnabled = true;
+    closeButton.inputEnabled = true;
+    closeButton.input.useHandCursor = true
+    closeButton.events.onInputDown.add(function() {
+      var tween = game.add.tween(window.scale);
+      tween.onComplete.add(function() {
+        window.kill();
+      });
+      tween.to({ x: 0, y: 0 }, 100, null, true);
+    });
   }
 };
