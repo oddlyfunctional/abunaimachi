@@ -118,6 +118,15 @@ window.onload = function() {
   var energy = initialEnergy;
   var energyLabel;
 
+  window.mrPointy;
+  window.mrPointyLabel;
+  var mrPointyLines = [
+    "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+    "Quisque id dui leo. Nam aliquam magna justo, vel convallis dolor scelerisque in.",
+    "Nam pretium, erat nec pretium tempor, tortor ex sagittis est, in dapibus mi eros sed nisl.",
+  ];
+  var mrPointyCurrentLine = 0;
+
   var game = new Phaser.Game(1920, 1080, Phaser.AUTO, '');
 
   var LEVEL_1 = {
@@ -162,6 +171,7 @@ window.onload = function() {
     game.load.image('grid-window', 'images/grid-window.png');
     game.load.image('energy', 'images/energy.png');
     game.load.image('taskbar', 'images/taskbar.png');
+    game.load.image('mrPointy', 'images/mr_pointy.png');
 
     game.load.audio('dropStoneSound', 'sounds/drop_stone.wav');
     game.load.audio('pickStoneSound', 'sounds/pick_stone.wav');
@@ -378,6 +388,30 @@ window.onload = function() {
     taskbar.anchor.set(0, 1);
 
     reset();
+
+    mrPointy = game.add.sprite(game.width, game.height, 'mrPointy');
+    mrPointy.x -= mrPointy.width;
+    mrPointy.y -= mrPointy.height;
+    mrPointy.inputEnabled = true;
+    mrPointy.input.useHandCursor = true
+    mrPointy.events.onInputDown.add(function() {
+      mrPointyCurrentLine++;
+      if (mrPointyCurrentLine < mrPointyLines.length) {
+        mrPointyLabel.text = mrPointyLines[mrPointyCurrentLine];
+      } else {
+        mrPointy.destroy();
+      }
+    });
+
+    bg = game.add.bitmapData(250, 120);
+    window.mrPointyBg = game.add.sprite(50, 40, bg);
+    mrPointy.addChild(mrPointyBg);
+
+    mrPointyLabel = game.add.text(0, 0, mrPointyLines[mrPointyCurrentLine], { font: 'interface' });
+    mrPointyLabel.fontSize = 20;
+    mrPointyLabel.wordWrap = true;
+    mrPointyLabel.wordWrapWidth = 350;
+    mrPointyBg.addChild(mrPointyLabel);
 
     setTimeout(function() {
       editorText.text = editorText.text + " ";
@@ -856,6 +890,7 @@ window.onload = function() {
   function setFocus(sprite) {
     sprite.bringToTop();
     taskbar.bringToTop();
+    mrPointy.bringToTop();
   }
 
   function createAlert(text, buttonText, callback) {
