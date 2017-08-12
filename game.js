@@ -87,6 +87,7 @@ window.onload = function() {
   var rotateSound;
   var pickBatterySound;
   var alertSound;
+  var typeSound;
   var bgMusic;
 
   window.editor;
@@ -118,13 +119,57 @@ window.onload = function() {
   var energy = initialEnergy;
   var energyLabel;
 
-  window.mrPointy;
+  window.mrPointy = null;
   window.mrPointyLabel;
   var mrPointyLines = [
-    "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-    "Quisque id dui leo. Nam aliquam magna justo, vel convallis dolor scelerisque in.",
-    "Nam pretium, erat nec pretium tempor, tortor ex sagittis est, in dapibus mi eros sed nisl.",
+    "Hi, I'm Mr. Pointy!\n" +
+    "You have a message\n" +
+    "from Mr. Notthere.\n" +
+    "Let me read it for you:",
+
+    "''Dear Whatsyourface,\n" +
+    "We're out for lunch\n" +
+    "celebrating Debra's\n" +
+    "(from HR not IT)\n" +
+    "birthday.''",
+
+    "''We're still eating,\n" +
+    "can u check out this\n" +
+    "nuclear nonsense ppl\n" +
+    "keep interrupting my\n" +
+    "lunch about?''",
+
+    "''Everyone's being\n" +
+    "so dramatic, geez,\n" +
+    "it's just a little\n" +
+    "uranium, grow up\n" +
+    "already.''",
+
+    "''Sorry for venting,\n" +
+    "It's just that\n" +
+    "they're ruining my\n" +
+    "kung pow chicken.\n" +
+    "It's cold now.''",
+
+    "''Sort it out, ok?\n" +
+    "We'll have cake soon\n" +
+    "and I wish to enjoy\n" +
+    "it without all the\n" +
+    "doom drama.''",
+
+    "''See you at 4!\n" +
+    "More or less.\n" +
+    "Make it 5.\n" +
+    "\n" +
+    "Mr. Notthere.''",
+
+    "That's all your\n" +
+    "messages.\n" +
+    "\n" +
+    "Keep sharp!\n" +
+    "Mr. Pointy out."
   ];
+
   var mrPointyCurrentLine = 0;
 
   var game = new Phaser.Game(1920, 1080, Phaser.AUTO, '');
@@ -180,6 +225,7 @@ window.onload = function() {
     game.load.audio('rotateSound', 'sounds/rotate.wav');
     game.load.audio('pickBatterySound', 'sounds/pick_battery.wav');
     game.load.audio('alertSound', 'sounds/alert.wav');
+    game.load.audio('typeSound', 'sounds/type.wav');
     game.load.audio('bgMusic', 'sounds/bgMusic.m4a');
   }
 
@@ -322,7 +368,6 @@ window.onload = function() {
   function delayedCreate() {
     bgMusic = game.add.audio('bgMusic');
     bgMusic.loop = true;
-    bgMusic.play();
     game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
 
     var gridWindow = game.add.sprite(GRID_LEFT, GRID_TOP, 'grid-window');
@@ -366,6 +411,8 @@ window.onload = function() {
     pickBatterySound.volume = 0.5;
     alertSound = game.add.audio('alertSound');
     alertSound.volume = 0.5;
+    typeSound = game.add.audio('typeSound');
+    typeSound.volume = 0.2;
 
     editorCursor = game.add.sprite(0, 0, 'cursor');
     editorCursor.width = CURSOR_WIDTH;
@@ -398,21 +445,29 @@ window.onload = function() {
     mrPointy.y -= mrPointy.height;
     mrPointy.inputEnabled = true;
     mrPointy.input.useHandCursor = true
+    bgMusic.stop();
     mrPointy.events.onInputDown.add(function() {
+      var currentLine = mrPointyLines[mrPointyCurrentLine];
+      if (mrPointyLabel.text.length < currentLine.length) {
+        mrPointyLabel.text = currentLine;
+        return;
+      }
+
       mrPointyCurrentLine++;
       if (mrPointyCurrentLine < mrPointyLines.length) {
-        mrPointyLabel.text = mrPointyLines[mrPointyCurrentLine];
+        mrPointyLabel.text = "";
       } else {
         mrPointy.destroy();
+        bgMusic.play();
       }
     });
 
-    bg = game.add.bitmapData(250, 120);
-    window.mrPointyBg = game.add.sprite(50, 40, bg);
+    bg = game.add.bitmapData(300, 120);
+    window.mrPointyBg = game.add.sprite(40, 30, bg);
     mrPointy.addChild(mrPointyBg);
 
-    mrPointyLabel = game.add.text(0, 0, mrPointyLines[mrPointyCurrentLine], { font: 'interface' });
-    mrPointyLabel.fontSize = 20;
+    mrPointyLabel = game.add.text(0, 0, "", { font: 'interface' });
+    mrPointyLabel.fontSize = 16;
     mrPointyLabel.wordWrap = true;
     mrPointyLabel.wordWrapWidth = 350;
     mrPointyBg.addChild(mrPointyLabel);
@@ -461,7 +516,16 @@ window.onload = function() {
     sprite.y = (55 * row) + 27;
   }
 
+  function typeMrPointy() {
+    var currentLine = mrPointyLines[mrPointyCurrentLine];
+    if (mrPointyLabel.text.length < currentLine.length) {
+      typeSound.play();
+      mrPointyLabel.text = currentLine.substr(0, mrPointyLabel.text.length + 1);
+    }
+  }
+
   function update() {
+    if (mrPointy && mrPointy.alive) { typeMrPointy(); }
     if (!isPlaying) { return; }
 
     switch (currentMove) {
