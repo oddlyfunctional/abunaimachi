@@ -170,7 +170,7 @@ window.onload = function() {
     "Mr. Pointy out."
   ];
 
-  var mrPointyCurrentLine = 0;
+  var mrPointyCurrentLine = -1;
 
   var game = new Phaser.Game(1920, 1080, Phaser.AUTO, '');
 
@@ -226,6 +226,8 @@ window.onload = function() {
     game.load.audio('pickBatterySound', 'sounds/pick_battery.wav');
     game.load.audio('alertSound', 'sounds/alert.wav');
     game.load.audio('typeSound', 'sounds/type.wav');
+    game.load.audio('mrPointyShow', 'sounds/mr_pointy_show.wav');
+    game.load.audio('mrPointyHide', 'sounds/mr_pointy_hide.wav');
     game.load.audio('bgMusic', 'sounds/bgMusic.m4a');
   }
 
@@ -442,13 +444,21 @@ window.onload = function() {
 
     mrPointy = game.add.sprite(game.width, game.height, 'mrPointy');
     mrPointy.x -= mrPointy.width;
-    mrPointy.y -= mrPointy.height;
     mrPointy.inputEnabled = true;
     mrPointy.input.useHandCursor = true
     bgMusic.stop();
+
+    var mrPointyTween = game.add.tween(mrPointy);
+    mrPointyTween .onComplete.add(function() {
+      mrPointyCurrentLine = 0;
+    });
+    mrPointyTween.to({ y: mrPointy.y - mrPointy.height }, 500, Phaser.Easing.Bounce.Out, true);
+
+    game.add.audio('mrPointyShow').play();
+
     mrPointy.events.onInputDown.add(function() {
       var currentLine = mrPointyLines[mrPointyCurrentLine];
-      if (mrPointyLabel.text.length < currentLine.length) {
+      if (currentLine && mrPointyLabel.text.length < currentLine.length) {
         mrPointyLabel.text = currentLine;
         return;
       }
@@ -457,8 +467,14 @@ window.onload = function() {
       if (mrPointyCurrentLine < mrPointyLines.length) {
         mrPointyLabel.text = "";
       } else {
-        mrPointy.destroy();
-        bgMusic.play();
+        game.add.audio('mrPointyHide').play();
+
+        var mrPointyTween = game.add.tween(mrPointy);
+        mrPointyTween .onComplete.add(function() {
+          mrPointy.destroy();
+          bgMusic.play();
+        });
+        mrPointyTween.to({ y: mrPointy.y + mrPointy.height }, 500, Phaser.Easing.Quadratic.In, true);
       }
     });
 
@@ -518,7 +534,7 @@ window.onload = function() {
 
   function typeMrPointy() {
     var currentLine = mrPointyLines[mrPointyCurrentLine];
-    if (mrPointyLabel.text.length < currentLine.length) {
+    if (currentLine && mrPointyLabel.text.length < currentLine.length) {
       typeSound.play();
       mrPointyLabel.text = currentLine.substr(0, mrPointyLabel.text.length + 1);
     }
