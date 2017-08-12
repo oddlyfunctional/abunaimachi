@@ -87,6 +87,7 @@ window.onload = function() {
   var rotateSound;
   var pickBatterySound;
   var alertSound;
+  var typeSound;
   var bgMusic;
 
   window.editor;
@@ -117,6 +118,59 @@ window.onload = function() {
   var initialEnergy = 7;
   var energy = initialEnergy;
   var energyLabel;
+
+  window.mrPointy = null;
+  window.mrPointyLabel;
+  var mrPointyLines = [
+    "Hi, I'm Mr. Pointy!\n" +
+    "You have a message\n" +
+    "from Mr. Notthere.\n" +
+    "Let me read it for you:",
+
+    "''Dear Whatsyourface,\n" +
+    "We're out for lunch\n" +
+    "celebrating Debra's\n" +
+    "(from HR not IT)\n" +
+    "birthday.''",
+
+    "''We're still eating,\n" +
+    "can u check out this\n" +
+    "nuclear nonsense ppl\n" +
+    "keep interrupting my\n" +
+    "lunch about?''",
+
+    "''Everyone's being\n" +
+    "so dramatic, geez,\n" +
+    "it's just a little\n" +
+    "uranium, grow up\n" +
+    "already.''",
+
+    "''Sorry for venting,\n" +
+    "It's just that\n" +
+    "they're ruining my\n" +
+    "kung pow chicken.\n" +
+    "It's cold now.''",
+
+    "''Sort it out, ok?\n" +
+    "We'll have cake soon\n" +
+    "and I wish to enjoy\n" +
+    "it without all the\n" +
+    "doom drama.''",
+
+    "''See you at 4!\n" +
+    "More or less.\n" +
+    "Make it 5.\n" +
+    "\n" +
+    "Mr. Notthere.''",
+
+    "That's all your\n" +
+    "messages.\n" +
+    "\n" +
+    "Keep sharp!\n" +
+    "Mr. Pointy out."
+  ];
+
+  var mrPointyCurrentLine = -1;
 
   var game = new Phaser.Game(1920, 1080, Phaser.AUTO, '');
 
@@ -162,6 +216,7 @@ window.onload = function() {
     game.load.image('grid-window', 'images/grid-window.png');
     game.load.image('energy', 'images/energy.png');
     game.load.image('taskbar', 'images/taskbar.png');
+    game.load.image('mrPointy', 'images/mr_pointy.png');
 
     game.load.audio('dropStoneSound', 'sounds/drop_stone.wav');
     game.load.audio('pickStoneSound', 'sounds/pick_stone.wav');
@@ -170,6 +225,9 @@ window.onload = function() {
     game.load.audio('rotateSound', 'sounds/rotate.wav');
     game.load.audio('pickBatterySound', 'sounds/pick_battery.wav');
     game.load.audio('alertSound', 'sounds/alert.wav');
+    game.load.audio('typeSound', 'sounds/type.wav');
+    game.load.audio('mrPointyShow', 'sounds/mr_pointy_show.wav');
+    game.load.audio('mrPointyHide', 'sounds/mr_pointy_hide.wav');
     game.load.audio('bgMusic', 'sounds/bgMusic.m4a');
   }
 
@@ -312,11 +370,12 @@ window.onload = function() {
   function delayedCreate() {
     bgMusic = game.add.audio('bgMusic');
     bgMusic.loop = true;
-    bgMusic.play();
     game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
 
     var gridWindow = game.add.sprite(GRID_LEFT, GRID_TOP, 'grid-window');
     enableDrag(gridWindow);
+    addCloseButton(gridWindow);
+    addMinimizeButton(gridWindow, 150, 1100);
 
     var bg = game.add.bitmapData(GRID_WIDTH, GRID_HEIGHT);
     gridBackground = game.add.sprite(12, 52, bg);
@@ -328,6 +387,8 @@ window.onload = function() {
 
     editor = game.add.sprite(300, 50, 'editor');
     enableDrag(editor);
+    addCloseButton(editor);
+    addMinimizeButton(editor, 50, 1100);
 
     bg = game.add.bitmapData(EDITOR_WIDTH, EDITOR_HEIGHT);
     var editorBackground = game.add.sprite(25, 65, bg);
@@ -352,6 +413,8 @@ window.onload = function() {
     pickBatterySound.volume = 0.5;
     alertSound = game.add.audio('alertSound');
     alertSound.volume = 0.5;
+    typeSound = game.add.audio('typeSound');
+    typeSound.volume = 0.2;
 
     editorCursor = game.add.sprite(0, 0, 'cursor');
     editorCursor.width = CURSOR_WIDTH;
@@ -378,6 +441,52 @@ window.onload = function() {
     taskbar.anchor.set(0, 1);
 
     reset();
+
+    mrPointy = game.add.sprite(game.width, game.height, 'mrPointy');
+    mrPointy.x -= mrPointy.width;
+    mrPointy.inputEnabled = true;
+    mrPointy.input.useHandCursor = true
+    bgMusic.stop();
+
+    var mrPointyTween = game.add.tween(mrPointy);
+    mrPointyTween .onComplete.add(function() {
+      mrPointyCurrentLine = 0;
+    });
+    mrPointyTween.to({ y: mrPointy.y - mrPointy.height }, 500, Phaser.Easing.Bounce.Out, true);
+
+    game.add.audio('mrPointyShow').play();
+
+    mrPointy.events.onInputDown.add(function() {
+      var currentLine = mrPointyLines[mrPointyCurrentLine];
+      if (currentLine && mrPointyLabel.text.length < currentLine.length) {
+        mrPointyLabel.text = currentLine;
+        return;
+      }
+
+      mrPointyCurrentLine++;
+      if (mrPointyCurrentLine < mrPointyLines.length) {
+        mrPointyLabel.text = "";
+      } else {
+        game.add.audio('mrPointyHide').play();
+
+        var mrPointyTween = game.add.tween(mrPointy);
+        mrPointyTween .onComplete.add(function() {
+          mrPointy.destroy();
+          bgMusic.play();
+        });
+        mrPointyTween.to({ y: mrPointy.y + mrPointy.height }, 500, Phaser.Easing.Quadratic.In, true);
+      }
+    });
+
+    bg = game.add.bitmapData(300, 120);
+    window.mrPointyBg = game.add.sprite(40, 30, bg);
+    mrPointy.addChild(mrPointyBg);
+
+    mrPointyLabel = game.add.text(0, 0, "", { font: 'interface' });
+    mrPointyLabel.fontSize = 16;
+    mrPointyLabel.wordWrap = true;
+    mrPointyLabel.wordWrapWidth = 350;
+    mrPointyBg.addChild(mrPointyLabel);
 
     setTimeout(function() {
       editorText.text = editorText.text + " ";
@@ -423,7 +532,16 @@ window.onload = function() {
     sprite.y = (55 * row) + 27;
   }
 
+  function typeMrPointy() {
+    var currentLine = mrPointyLines[mrPointyCurrentLine];
+    if (currentLine && mrPointyLabel.text.length < currentLine.length) {
+      typeSound.play();
+      mrPointyLabel.text = currentLine.substr(0, mrPointyLabel.text.length + 1);
+    }
+  }
+
   function update() {
+    if (mrPointy && mrPointy.alive) { typeMrPointy(); }
     if (!isPlaying) { return; }
 
     switch (currentMove) {
@@ -744,6 +862,7 @@ window.onload = function() {
   }
 
   function write(event) {
+    if (!editor.alive) { return; }
     var keyCode = event.keyCode;
 
     var isBackspace = keyCode == 8;
@@ -856,6 +975,7 @@ window.onload = function() {
   function setFocus(sprite) {
     sprite.bringToTop();
     taskbar.bringToTop();
+    mrPointy.bringToTop();
   }
 
   function createAlert(text, buttonText, callback) {
@@ -884,5 +1004,37 @@ window.onload = function() {
       alert.destroy(true);
       callback && callback();
     }
+  }
+
+  function addCloseButton(window) {
+    var bg = game.add.bitmapData(35, 35);
+    var closeButton = game.add.sprite(window.width - 10, 10, bg);
+    closeButton.x -= closeButton.width;
+    window.addChild(closeButton);
+    closeButton.inputEnabled = true;
+    closeButton.input.useHandCursor = true
+    closeButton.events.onInputDown.add(function() {
+      var tween = game.add.tween(window.scale);
+      tween.onComplete.add(function() {
+        window.kill();
+      });
+      tween.to({ x: 0, y: 0 }, 150, null, true);
+    });
+  }
+
+  function addMinimizeButton(window, pivotX, pivotY) {
+    var bg = game.add.bitmapData(35, 35);
+    var minimizeButton = game.add.sprite(window.width - 135, 10, bg);
+    window.addChild(minimizeButton);
+    minimizeButton.inputEnabled = true;
+    minimizeButton.input.useHandCursor = true
+    minimizeButton.events.onInputDown.add(function() {
+      var tween = game.add.tween(window.scale);
+      tween.onComplete.add(function() {
+        window.kill();
+      });
+      tween.to({ x: 0, y: 0 }, 150, null, true);
+      game.add.tween(window).to({ x: pivotX, y: pivotY }, 150, null, true);
+    });
   }
 };
